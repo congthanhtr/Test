@@ -1,0 +1,14 @@
+{
+    "tour_info_search_value": "list-group-item",
+    "tour_property_search_value": "meta-travel-val",
+    "tour_code_index": 0,
+    "tour_length_index": 1,
+    "tour_from_index": 2,
+    "tour_transport_index": 3,
+    "tour_hotel_rating_index": 4,
+    "tour_start_date_index": 5,
+    "tour_price_index": 6, 
+    "tour_kid_index": 7,
+    "tour_program": "tab-container",
+    "web_crawl": "https://vietnamtravelmart.com.vn/tour-du-lich/tour-du-lich-trong-nuoc"
+}
