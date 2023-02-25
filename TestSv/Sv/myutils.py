@@ -10,7 +10,22 @@ import urllib.parse
 
 class util:
 
-    api_key = open('static/api_key.txt').read()
+    API_KEY = open('static/api_key.txt').read()
+    NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE = {'msg': 'not supported this http method'}
+    EXCEPTION_THROWN_AT_JSONRESPONSE = 'exception thrown at '
+    EXCEPTION_MESSAGE_JSONRESPONSE = ''
+
+    @staticmethod
+    def get_exception(at: str, msg: str) -> dict:
+        '''
+        get exception and return it as msg to client
+        '''
+        util.EXCEPTION_THROWN_AT_JSONRESPONSE += at
+        util.EXCEPTION_MESSAGE_JSONRESPONSE = str(msg)
+        return {
+            'ex_at': util.EXCEPTION_THROWN_AT_JSONRESPONSE,
+            'ex_msg': util.EXCEPTION_MESSAGE_JSONRESPONSE
+        }
 
     #region topsis method
     @staticmethod

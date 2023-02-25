@@ -106,5 +106,4 @@ class WeatherForecast:
         return response
 
     def weathercode_to_text(self, weathercode):
-        print(weathercode)
         return self.weather_indicate[weathercode]
