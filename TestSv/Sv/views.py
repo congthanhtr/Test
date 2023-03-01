@@ -2,7 +2,7 @@ import json
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 
-from .crawler import Crawler, TourInformation
+from .crawler import Crawler
 from .weather_forcast import WeatherForecast
 from .myutils import util
 
@@ -15,25 +15,16 @@ from googleplaces import GooglePlaces, types, lang, ranking
 BASE_API_URL = 'api/v1/'
 
 def index(request):
+    API_ENDPOINT = BASE_API_URL+'index'
     # region request content
-    body_content = json.loads(request.body)
-    address = body_content['address']
-    # types = body_content['types']
-    types = ['restaurant']
     # endregion
-    location = util.searchForLocation_v2(address)
-    if type(location) == 'str':
-        return JsonResponse(util.to_json(location))
-    else:
-        google_places = GooglePlaces(util.API_KEY)
-        nearby = google_places.nearby_search(
-            lat_lng=location,
-            radius=10000,
-            types=types,
-            rankby=ranking.PROMINENCE,
-            language=lang.VIETNAMESE
-        )
-        return JsonResponse(util.to_json(nearby))
+    try:
+        crawler = Crawler()
+        list_tour = crawler.crawl_tour_detail()
+        print(list_tour)
+        return JsonResponse({'msg': 'nai xơ'})
+    except Exception as ex:
+        return JsonResponse(util.get_exception(API_ENDPOINT, str(ex)))
 
 def maps(request):
     map_client = googlemaps.Client(util.API_KEY)
