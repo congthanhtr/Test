@@ -1,13 +1,16 @@
 import json
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from http import HTTPStatus
 
 from .crawler import Crawler
 from .weather_forcast import WeatherForecast
 from .myutils import util
+from .result_object import ResultObject
 
 import pandas as pd
 import googlemaps
+import traceback, sys
 from googleplaces import GooglePlaces, types, lang, ranking
 
 # Create your views here.
@@ -16,16 +19,17 @@ BASE_API_URL = 'api/v1/'
 
 def index(request):
     API_ENDPOINT = BASE_API_URL+'index'
+    result = ResultObject()
     # region request content
     # endregion
     try:
         crawler = Crawler()
         list_tour = crawler.crawl_tour_detail()
-        print(list_tour)
-        return JsonResponse({'msg': 'nai xơ'})
+        result.data = list_tour
     except Exception as ex:
-        return JsonResponse(util.get_exception(API_ENDPOINT, str(ex)))
-
+        result.data = util.get_exception(API_ENDPOINT, traceback.format_exc())
+        result.status_code = HTTPStatus.BAD_REQUEST.value
+    return JsonResponse(util.to_json(result))
 def maps(request):
     map_client = googlemaps.Client(util.API_KEY)
     location = util.searchForLocation('Đà Lạt') # param from requests
@@ -44,6 +48,7 @@ def maps_v2(request):
         address = body_content['address']
         types = body_content['types']
         # endregion
+        result = ResultObject
         location = util.searchForLocation_v2(address)
         if type(location) == 'str':
             return JsonResponse(util.to_json(location))
@@ -128,6 +133,7 @@ def recommend_tour(request):
 
 def weather_forecast(request):
     API_ENDPOINT = BASE_API_URL+'weather_forecast'
+    result = ResultObject()
     if request.method == "POST":
         try:
             forecaster = WeatherForecast()
@@ -137,11 +143,17 @@ def weather_forecast(request):
             longitude = body_content['longitude']
             forecast_type = body_content['forecast_type']
             # endregion
-            result = forecaster.do_forecast(latitude, longitude, forecast_type)
-            if (result is None):
-                result = {"msg": "latitude, longitude or forecast_type is invalid"}
-            return JsonResponse(util.to_json(result), safe=False)
+            forecast_result = forecaster.do_forecast(latitude, longitude, forecast_type)
+            if (forecast_result is None):
+                forecast_result = {"msg": "latitude, longitude or forecast_type is invalid"}
+                result.assgin_value(forecast_result, HTTPStatus.BAD_REQUEST.value)
+            else:
+                result.assgin_value(forecast_result, HTTPStatus.OK.value)
         except Exception as e:
-            return JsonResponse(util.get_exception(API_ENDPOINT, str(e)))
+            result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
+            result.status_code = HTTPStatus.CONFLICT.value
     else:
-        return JsonResponse(util.get_exception(API_ENDPOINT, util.NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE))
+        result.data = util.get_exception(API_ENDPOINT, util.NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE)
+        result.status_code = HTTPStatus.METHOD_NOT_ALLOWED.value
+
+    return JsonResponse(util.to_json(result))

@@ -7,6 +7,10 @@ import googlemaps
 import requests
 import urllib.parse
 
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.common.by import By
+
+
 
 class util:
 
@@ -127,3 +131,37 @@ class util:
         encoded_data = jsonpickle.encode(obj, unpicklable=False)
         decoded_data = jsonpickle.decode(encoded_data)
         return decoded_data
+
+    def contains_day(source: str, no_of_day: int):
+        day_with_zero = 'ngày 0' + str(no_of_day)
+        day_without_zero = 'ngày ' + str(no_of_day)
+        if source.lower().__contains__(day_with_zero):
+            return (True, day_with_zero)
+        elif source.lower().__contains__(day_without_zero):
+            return (True, day_without_zero)
+        else:
+            return (False, '')
+        
+    def find_between_element(first_element: WebElement, second_element: WebElement):
+        """
+        Tìm tất cả các element nằm giữa first và second element 
+        """
+        if first_element is not None and second_element is not None:
+            after = first_element.find_elements(By.XPATH, 'following-sibling::*')
+            before = second_element.find_elements(By.XPATH, 'preceding-sibling::*')
+            middle = [elem for elem in after if elem in before]
+        elif first_element is None:
+            middle = second_element.find_elements(By.XPATH, 'preceding-sibling::*')
+        elif second_element is None:
+            middle = first_element.find_elements(By.XPATH, 'following-sibling::*')
+        return middle
+    
+    def is_contains(source: str, child: str):
+        if source.lower().__contains__(child.lower()):
+            return True
+        return False
+    
+    def is_null_or_empty(source: str):
+        if source == '' or source is None:
+            return True
+        return False
