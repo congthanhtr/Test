@@ -67,16 +67,17 @@ class Crawler:
         list_link_tour = open("static/links.txt").read().splitlines()
         if list_link_tour is not None and len(list_link_tour) > 0:
             for link_tour in list_link_tour:
+                tour = TourInfomation()
                 self.driver.get(link_tour)
                 self.try_open_read_more()
-                tour = self.crawl_tour_general_info(TourInfomation())
+                tour = self.crawl_tour_general_info(tour)
                 list_tour_info.append(tour)
-            with open("static/data.csv", encoding="utf-8", mode="w") as f:
-                write = csv.writer(f)
-                for tour in list_tour_info:
-                    write.writerow(
-                        [tour.start_from, tour.length, tour.transport, tour.program]
-                    )
+            # with open("static/data.csv", encoding="utf-8", mode="w") as f:
+            #     write = csv.writer(f)
+            #     for tour in list_tour_info:
+            #         write.writerow(
+            #             [tour.start_from, tour.length, tour.transport, tour.program]
+            #         )
         else:
             raise Exception("List load from file is None or Empty")
         return list_tour_info
@@ -206,7 +207,9 @@ class Crawler:
                 
                 detail = detail.crawl_program_tour([elem.text.strip() for elem in middle])
                 # điểm đến
-
+                list_destination: list[str] = day_i_header_text.split('(')[0].lower().replace(day_text + ' |', '').split('-')
+                list_destination_stripped = [des.strip() for des in list_destination]
+                detail = detail.crawl_destination(list_destination=list_destination_stripped)
                 # cảnh báo
 
                 # dịch vụ (khách sạn, nhà nghỉ)
@@ -264,6 +267,6 @@ class Crawler:
     
     def try_open_read_more(self):
         try:
-            self.driver.find_element(By.CLASS_NAME, self.config['class_value_read_more']).find_element(By.TAG_NAME, 'span').click()
+            self.driver.find_element(By.ID, self.config['id_value_tab_program']).find_element(By.CLASS_NAME, self.config['class_value_read_more']).find_element(By.TAG_NAME, 'span').click()
         except:
             pass

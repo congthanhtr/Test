@@ -2,6 +2,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from .myutils import util
 
+
 class ConfigTourLengthType:
     ADAY = 1
     MULTIPLEDAYANDNIGHT = 2
@@ -26,6 +27,7 @@ class ConfigTourTransport:
     SHIP: str = "Tàu thủy"
     TRAIN: str = "Tàu hỏa"
 
+
 class TourProgramDetailConst:
     # const
     MORNING: str = "sáng"
@@ -39,10 +41,12 @@ class TourProgramDetailConst:
     HOTEL = "khách sạn"
     RESTAURANT = "nhà hàng"
 
+
 class TourProgramDetail(TourProgramDetailConst):
     """
     Chi tiết chương trình tour trong 1 ngày
     """
+
     # ăn uống
     has_breakfast: bool = False
     has_lunch: bool = False
@@ -84,21 +88,30 @@ class TourProgramDetail_Crawler:
 
     def crawl_program_tour(self, tour_program: str):
         """
-         Hàm chức năng của crawl_tour_many_days:
-            Crawl các thông tin liên quan đến chương trình tour
+        Hàm chức năng của crawl_tour_many_days:
+           Crawl các thông tin liên quan đến chương trình tour
         """
         pass
 
     def crawl_gala_dinner(self, tour_name: str):
+        """
+        Crawl thông tin liên quan đến gala dinner
+        """
         pass
-    
+
     def crawl_tour_guide(self, extra_services: list[str]):
         pass
 
-    def crawl_destination(self):
+    def crawl_destination(self, list_destination: list[str]):
+        """
+        Crawl các thông tin liên quan đến địa điểm đến trong ngày
+        """
         pass
 
     def crawl_hotel_service(self):
+        """
+        Crawl các thông tin liên quan đến việc sử dụng dịch vụ nhà hàng/khách sạn
+        """
         pass
 
 
@@ -106,31 +119,32 @@ class TourProgramDetail_InADay(TourProgramDetail, TourProgramDetail_Crawler):
     """
     Chi tiết chương trình tour dài 1 ngày
     """
-    summary: str = ''
+
+    summary: str = ""
     no_of_day: int = 0
-    morning: str = ''
-    noon: str = ''
-    afternoon: str = ''
-    evenning: str = ''
+    morning: str = ""
+    noon: str = ""
+    afternoon: str = ""
+    evenning: str = ""
 
     def crawl_meals_info(self, meals: str):
-        if (util.is_contains(meals, TourProgramDetail.THREEMEALS)):
+        if util.is_contains(meals, TourProgramDetail.THREEMEALS):
             self.has_breakfast = True
             self.has_lunch = True
             self.has_dinner = True
             return self
-        if (util.is_contains(meals, TourProgramDetail.TWOMEALS)):
+        if util.is_contains(meals, TourProgramDetail.TWOMEALS):
             self.has_breakfast = True
             self.has_dinner = True
             return self
-        if (util.is_contains(meals, TourProgramDetail.MORNING)):
+        if util.is_contains(meals, TourProgramDetail.MORNING):
             self.has_breakfast = True
-        if (util.is_contains(meals, TourProgramDetail.NOON)):
+        if util.is_contains(meals, TourProgramDetail.NOON):
             self.has_lunch = True
-        if (util.is_contains(meals, TourProgramDetail.EVENNING)):
+        if util.is_contains(meals, TourProgramDetail.EVENNING):
             self.has_dinner = True
         return self
-    
+
     def crawl_transport_info(self, transports: list[str]):
         """
         Hàm chức năng của crawl_tour_many_days:
@@ -155,25 +169,101 @@ class TourProgramDetail_InADay(TourProgramDetail, TourProgramDetail_Crawler):
         if TourProgramDetail.TOUR_GUIDE in extra_services:
             self.has_tour_guide = True
         return self
-    
-    def crawl_program_tour(self, tour_program: list[str]):
-        for program in tour_program:
-            # sử dụng dịch vụ nhà hàng khách sạn
-            if util.is_contains(program, TourProgramDetail.HOTEL):
-                self.use_hotel = True
-            if util.is_contains(program, TourProgramDetail.RESTAURANT):
-                self.use_restaurant = True
-            
 
+    def crawl_program_tour(self, tour_program: list[str]):
+        for i in range(0, len(tour_program)):
+            # sử dụng dịch vụ nhà hàng khách sạn
+            if util.is_contains(tour_program[i], TourProgramDetail.HOTEL):
+                self.use_hotel = True
+            if util.is_contains(tour_program[i], TourProgramDetail.RESTAURANT):
+                self.use_restaurant = True
+            # crawl chương trình tour
+            # self.morning = 'morning'
+            self.noon = 'noon'
+            self.afternoon = 'afternoon'
+            self.evenning = 'evening'
+            # morning_process =  self.process_tour_program_foreach(
+            #     tour_program=tour_program,
+            #     start_index=i,
+            #     time=self.morning,
+            #     time_text=self.MORNING,
+            #     not_include_time_text=[self.NOON, self.AFTERNOON, self.EVENNING],
+            # )
+            # if (not util.is_null_or_empty(morning_process)):
+            #     print(morning_process)
+            #     self.morning = morning_process
+        return self
+
+    def crawl_destination(self, list_destination: list[str]):
+        self.destination = []
+        for destination in list_destination:
+            city = util.find_city_for_destination(destination=destination)
+            if city not in self.destination:
+                self.destination.append(city)
+        return self
+
+    def process_tour_program(self, tour_program: list[str], start_index: int):
+        morning_process =  self.process_tour_program_foreach(
+            tour_program=tour_program,
+            start_index=start_index,
+            time=self.morning,
+            time_text=self.MORNING,
+            not_include_time_text=[self.NOON, self.AFTERNOON, self.EVENNING],
+        )
+        if not util.is_null_or_empty(morning_process):
+            self.morning = morning_process
+        else:
+            self.morning = self.morning
+        # self.process_tour_program_foreach(
+        #     tour_program=tour_program,
+        #     start_index=start_index,
+        #     time=self.noon,
+        #     time_text=self.NOON,
+        #     not_include_time_text=[self.MORNING, self.AFTERNOON, self.EVENNING],
+        # )
+        # self.process_tour_program_foreach(
+        #     tour_program=tour_program,
+        #     start_index=start_index,
+        #     time=self.afternoon,
+        #     time_text=self.AFTERNOON,
+        #     not_include_time_text=[self.NOON, self.MORNING, self.EVENNING],
+        # )
+        # self.process_tour_program_foreach(
+        #     tour_program=tour_program,
+        #     start_index=start_index,
+        #     time=self.evenning,
+        #     time_text=self.EVENNING,
+        #     not_include_time_text=[self.NOON, self.AFTERNOON, self.MORNING],
+        # )
+
+    def process_tour_program_foreach(
+        self,
+        tour_program: list[str],
+        start_index: int,
+        time: str,
+        time_text: str,
+        not_include_time_text: list[str],   
+    ):
+        temp_str: str = ''
+        for i in range(start_index, len(tour_program)):
+            at_time = tour_program[i].split(":")[0]
+            if util.is_equals(at_time, time_text):
+                temp_str = tour_program[i]
+                for j in range(i + 1, len(tour_program)):
+                    at_time = tour_program[j].split(":")[0]
+                    if at_time not in not_include_time_text:
+                        temp_str += tour_program[j]
+        return temp_str
 
 
 class TourInfomation:
-    name: str
-    start_from: str
-    length: tuple
-    transport: list[str]
-    price: int
-    program: list[TourProgramDetail_InADay]
+    name: str = ""
+    start_from: str = ""
+    length: tuple = ()
+    transport: list[str] = []
+    price: int = 0
+    num_of_destinations: int = 0
+    program: list[TourProgramDetail_InADay] = []
     weather: bool = False
 
     DAY = "ngày"
@@ -201,14 +291,10 @@ class TourInfomation:
                 TourInfomation.DEFAULT_NIGHT_ZERO
                 if (
                     not util.is_contains(tour_name, TourInfomation.NIGHT_INSHORT)
-                    and not util.is_contains(tour_name,
-                        TourInfomation.NIGHT_INSHORT1
-                    )
-                    and not util.is_contains(tour_name,
-                        TourInfomation.NIGHT_INFULL
-                    )
-                    and not util.is_contains(tour_name,
-                        TourInfomation.NIGHT_INFULL_TEXT
+                    and not util.is_contains(tour_name, TourInfomation.NIGHT_INSHORT1)
+                    and not util.is_contains(tour_name, TourInfomation.NIGHT_INFULL)
+                    and not util.is_contains(
+                        tour_name, TourInfomation.NIGHT_INFULL_TEXT
                     )
                 )
                 else TourInfomation.DEFAULT_NIGHT_ONE,

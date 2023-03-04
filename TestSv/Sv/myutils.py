@@ -11,13 +11,16 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 
 
-
 class util:
 
     API_KEY = open('static/api_key.txt').read()
     NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE = {'msg': 'not supported this http method'}
     EXCEPTION_THROWN_AT_JSONRESPONSE = 'exception thrown at '
     EXCEPTION_MESSAGE_JSONRESPONSE = ''
+
+    NOMINATIM_API = 'https://nominatim.openstreetmap.org/search/{}?format=json&addressdetails=1&countrycodes=vn'
+    NOMINATIM_CHECK_API = 'https://nominatim.openstreetmap.org/status.php?format=json'
+    OPENTRIPMAP_API = 'https://api.opentripmap.com/0.1/en/places/bbox?lon_min={}&lon_max={}&lat_min={}&lat_max={}&format=json&limit={}&apikey={} ' # must format with {lonmin, lonmax, latmin, latmax, maxobject, apikey}
 
     @staticmethod
     def get_exception(at: str, msg: str) -> dict:
@@ -112,10 +115,9 @@ class util:
                 - A dictionary returning the latitude, and longitude
                 of an address.
         '''
-        check_url = 'https://nominatim.openstreetmap.org/status.php?format=json'
-        check_result = requests.get(check_url).json()
+        check_result = requests.get(util.NOMINATIM_CHECK_API).json()
         if check_result['message'] == 'OK':
-            url = 'https://nominatim.openstreetmap.org/search/' + urllib.parse.quote(address) +'?format=json&addressdetails=1'
+            url = util.NOMINATIM_API.format(address)
             response = requests.get(url).json()
             if response:
                 location = response[0]
@@ -123,6 +125,18 @@ class util:
                 # return location
         else:
             return check_result['message']
+        
+    def search_for_boundary_box(address):
+        '''
+        Tìm thông tin về boundary box thông qua address
+            Trả về: tuple (lonmin, lonmax, latmin, latmax)
+        '''
+        check_result = requests.get(util.NOMINATIM_CHECK_API).json()
+        if check_result['message'] == 'OK':
+            response = requests.get(util.NOMINATIM_API.format(address)).json()
+            if response:
+                location = response[0]['boundingbox']
+                return (location[2], location[3], location[0], location[1])
 
     def to_json(obj):
         '''
@@ -157,11 +171,48 @@ class util:
         return middle
     
     def is_contains(source: str, child: str):
+        """
+        Kiểm tra xem chuỗi source có bao gồm chuỗi child không?
+            Trả về: True nếu chứa, False nếu không
+        """
         if source.lower().__contains__(child.lower()):
             return True
         return False
     
+    def is_equals(source: str, des: str):
+        if source.lower() == des.lower():
+            return True
+        return False
+    
     def is_null_or_empty(source: str):
+        """
+        Kiểm tra chuỗi None hay chuỗi trống hay không?
+        """
         if source == '' or source is None:
             return True
         return False
+    
+    def find_city_for_destination(destination: str):
+        """
+        Tìm tỉnh/thành phố cho địa điểm du lịch
+        """
+        response = requests.get(util.NOMINATIM_API.format(urllib.parse.quote(destination))).json()
+        if response:
+            address = response[0]['address']
+            city: str = ''
+            if 'state' in address:
+                city = address['state']
+            if 'city' in address:
+                city = address['city']
+            return city
+
+    def get_list_interesting_places(address: str, limit: int, apikey = None):
+        '''
+        Tìm thông tin về các địa điểm tham quan du lịch hấp dẫn tại một điểm
+        '''
+        boundary_box = util.search_for_boundary_box(address=address)
+        apikey = open('static/api_key_opentripmap.txt').read()
+        url = util.OPENTRIPMAP_API.format(boundary_box[0], boundary_box[1], boundary_box[2], boundary_box[3], limit, apikey)
+        response = requests.get(url).json()
+        return response
+

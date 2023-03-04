@@ -97,7 +97,10 @@ class WeatherForecast:
         return self.weather_indicate[weathercode]
 
 
+import wikipedia
+import translators as ts
 
-forecast = WeatherForecast()
-result = forecast.daily_forecast('10.7571445', '106.6883012')
-print(result)
+wikipedia.set_lang('vn')
+wiki = wikipedia.summary('Bắc Ninh', sentences=3)
+print(wiki)
+print(ts.translate_text(query_text=wiki, translator='google', from_language='vi', to_language='en'))

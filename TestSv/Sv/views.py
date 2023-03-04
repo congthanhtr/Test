@@ -40,6 +40,18 @@ def maps(request):
     print(result)
     return HttpResponse(result)
 
+def maps_v3(request):
+    API_ENDPOINT = BASE_API_URL+'maps_v3'
+    result = ResultObject()
+    if request.method == "POST":
+        body_content = json.loads(request.body)
+        address = body_content['address']
+        limit = body_content['limit']
+        location = util.get_list_interesting_places(address=address, limit=limit)
+        result.data = location
+        result.status_code = HTTPStatus.OK.value
+    return JsonResponse(util.to_json(result))
+
 def maps_v2(request):
     API_ENDPOINT = BASE_API_URL+'maps_v2'
     if request.method == "POST":
@@ -48,7 +60,7 @@ def maps_v2(request):
         address = body_content['address']
         types = body_content['types']
         # endregion
-        result = ResultObject
+        result = ResultObject()
         location = util.searchForLocation_v2(address)
         if type(location) == 'str':
             return JsonResponse(util.to_json(location))

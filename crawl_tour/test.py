@@ -24,9 +24,12 @@ xemthem = parent_element.find_element(By.CLASS_NAME, 'box-readmore').find_elemen
 day_header = parent_element.find_elements(By.TAG_NAME, 'h3')
 for i in range(0, 3):
     header_text = day_header[i].text
+    print(header_text)
     no_of_day = i + 1
-    print('Ngày ' + str(no_of_day))
     meals = header_text.split("(")[1].lower()
+    # destinations = header_text.split('(')[0].lower().split('-')
+    # for des in destinations:
+    #     print(des.replace('ngày 01 |', '').strip())
     # print(header_text)
     # if (meals.__contains__('sáng')):
     #     print('Sáng true')
@@ -58,4 +61,4 @@ for i in range(0, 3):
         # before = day_header[i].find_elements(By.XPATH, 'following-sibling::*')
         # before.extend(day_header[i].find_elements(By.XPATH, 'preceding-sibling::ul'))
 
-    print('\n'.join(middle))
+    print(middle)
