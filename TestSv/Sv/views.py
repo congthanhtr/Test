@@ -1,12 +1,13 @@
 import json
+import time
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from http import HTTPStatus
 
 from .crawler import Crawler
-from .weather_forcast import WeatherForecast
+from .model.weather_forcast import WeatherForecast
 from .myutils import util
-from .result_object import ResultObject
+from .model.result_object import ResultObject
 
 import pandas as pd
 import googlemaps
@@ -41,15 +42,21 @@ def maps(request):
     return HttpResponse(result)
 
 def maps_v3(request):
+    start = time.time()
     API_ENDPOINT = BASE_API_URL+'maps_v3'
     result = ResultObject()
     if request.method == "POST":
-        body_content = json.loads(request.body)
-        address = body_content['address']
-        limit = body_content['limit']
-        location = util.get_list_interesting_places(address=address, limit=limit)
-        result.data = location
-        result.status_code = HTTPStatus.OK.value
+        try:
+            body_content = json.loads(request.body)
+            address = body_content['address']
+            limit = body_content['limit']
+            location = util.get_list_interesting_places(addresses=address, limit=limit)
+            end = time.time()
+            print('total request time: ' + str(end-start))
+            result.data = location
+            result.status_code = HTTPStatus.OK.value
+        except Exception as e:
+            result.data = util.get_exception(API_ENDPOINT, traceback.format_exc())
     return JsonResponse(util.to_json(result))
 
 def maps_v2(request):

@@ -11,7 +11,7 @@ import csv
 import json
 from .myutils import util
 
-from .tour_information import (
+from .model.tour_information import (
     TourInfomation,
     TourProgramDetail,
     TourProgramDetail_InADay,

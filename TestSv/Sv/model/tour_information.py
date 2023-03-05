@@ -1,6 +1,6 @@
 from selenium.webdriver.support import expected_conditions as EC
 
-from .myutils import util
+from ..myutils import util
 
 
 class ConfigTourLengthType:
@@ -266,6 +266,7 @@ class TourInfomation:
     program: list[TourProgramDetail_InADay] = []
     weather: bool = False
 
+    #region const
     DAY = "ngày"
     NIGHT = "đêm"
     NIGHT_INSHORT = "1n1d"
@@ -276,6 +277,7 @@ class TourInfomation:
     DEFAULT_NIGHT_ONE = 1  # tour 1 ngày 1 đêm
     VND = "VND"
     VNDPERONE = "VND/người"
+    #endregion
 
     @staticmethod
     def to_length(tour_length: str, tour_name: str):
