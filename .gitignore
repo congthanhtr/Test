@@ -7,3 +7,8 @@ links.txt
 data.txt
 vn.json
 *.pyc
+TestSv/Sv/__pycache__/myutils.cpython-39.pyc
+TestSv/Sv/__pycache__/urls.cpython-39.pyc
+TestSv/Sv/__pycache__/views.cpython-39.pyc
+TestSv/Sv/__pycache__/weather_forcast.cpython-39.pyc
+TestSv/TestSv/__pycache__/settings.cpython-39.pyc
