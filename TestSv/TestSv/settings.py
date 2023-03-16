@@ -76,14 +76,14 @@ WSGI_APPLICATION = 'TestSv.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'testSv',
-        'USER': 'postgres',
-        'PASSWORD': '1',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #     'NAME': 'testSv',
+    #     'USER': 'postgres',
+    #     'PASSWORD': '1',
+    #     'HOST': 'localhost',
+    #     'PORT': '5432',
+    # }
 }
 
 

@@ -14,6 +14,11 @@ import googlemaps
 import traceback, sys
 from googleplaces import GooglePlaces, types, lang, ranking
 
+# ML models
+from .ml_model.decision_tree import model as dc_model
+
+from .ml_model.linear_regression import lm_model
+
 # Create your views here.
 
 BASE_API_URL = 'api/v1/'
@@ -165,9 +170,9 @@ def weather_forecast(request):
             forecast_result = forecaster.do_forecast(latitude, longitude, forecast_type)
             if (forecast_result is None):
                 forecast_result = {"msg": "latitude, longitude or forecast_type is invalid"}
-                result.assgin_value(forecast_result, HTTPStatus.BAD_REQUEST.value)
+                result.assign_value(forecast_result, HTTPStatus.BAD_REQUEST.value)
             else:
-                result.assgin_value(forecast_result, HTTPStatus.OK.value)
+                result.assign_value(forecast_result, HTTPStatus.OK.value)
         except Exception as e:
             result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
             result.status_code = HTTPStatus.CONFLICT.value
@@ -176,3 +181,52 @@ def weather_forecast(request):
         result.status_code = HTTPStatus.METHOD_NOT_ALLOWED.value
 
     return JsonResponse(util.to_json(result))
+
+def predict_vehicle(request):
+    API_ENDPOINT = BASE_API_URL+'predict_vehicle'
+    result = ResultObject()
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body) # Data is an array
+
+            # Load the data into a pandas DataFrame
+            df = pd.DataFrame([data['data']])
+
+            y_pred = dc_model.predict(df)
+
+            # Convert the predicted labels to a list
+            predictions = y_pred.tolist()
+
+            # Create a dictionary with the predicted labels
+            resData = result.assign_value(predictions, 200)
+
+        except Exception as e:
+            result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
+            result.status_code = HTTPStatus.BAD_REQUEST.value  
+    # Return the result as a JSON response
+    return JsonResponse(util.to_json(resData))
+
+
+def predict_places(request):
+    API_ENDPOINT = BASE_API_URL+'predict_places'
+    result = ResultObject()
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body) # Data is an array
+
+            # Load the data into a pandas DataFrame
+            df = pd.DataFrame([data['data']])
+
+            y_pred = lm_model.predict(df)
+
+            # make y_pred a rounded number
+            actualResult = round(y_pred[0])
+
+            # Create a dictionary with the predicted labels
+            resData = result.assign_value(actualResult, 200)
+
+        except Exception as e:
+            result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
+            result.status_code = HTTPStatus.BAD_REQUEST.value  
+    # Return the result as a JSON response
+    return JsonResponse(util.to_json(resData))
