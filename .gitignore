@@ -1,11 +1,3 @@
-api_key.txt
-config.json
-crawl.csv
-data.csv
-api_key_opentripmap.txt
-links.txt
-data.txt
-vn.json
 *.pyc
 TestSv/Sv/__pycache__/myutils.cpython-39.pyc
 TestSv/Sv/__pycache__/urls.cpython-39.pyc

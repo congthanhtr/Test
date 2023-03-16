@@ -8,12 +8,13 @@ import urllib.parse
 import googlemaps
 import wikipediaapi
 from deep_translator import GoogleTranslator
+from geopy import distance
 
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 
 from .model.interesting_places import InterestingPlace
-from .model.vietnam_city_geo import VietnamCityGeo, VietnamCityBBox
+from .model.vietnam_city_geo import VietnamCityGeo, VietnamCityBBox, VietnamAirport
 
 class util:
 
@@ -28,6 +29,7 @@ class util:
 
     vietnam_city_geo = VietnamCityGeo().load_list()
     vietnam_city_bbox = VietnamCityBBox().load_list()
+    vietnam_airport = VietnamAirport().load_list()
 
     NOMINATIM_API = 'https://nominatim.openstreetmap.org/search/{}?format=json&addressdetails=1&countrycodes=vn'
     NOMINATIM_CHECK_API = 'https://nominatim.openstreetmap.org/status.php?format=json'
@@ -135,7 +137,8 @@ class util:
         response = requests.get(url).json()
         if response:
             location = response[0]
-            return {'lat': location['lat'], 'lng': location['lon']}
+            # return {'lat': location['lat'], 'lng': location['lon']}
+            return (location['lat'], location['lon'])
             # return location
     
     @staticmethod
@@ -150,7 +153,7 @@ class util:
             return (location[2], location[3], location[0], location[1])
 
     @staticmethod
-    def to_json(obj):
+    def to_json(obj: object):
         '''
         transform data into json to send to client
         '''
@@ -282,4 +285,50 @@ class util:
                         list_interesting_places.append(interesting)
         return list_interesting_places
     
+    @staticmethod
+    def get_distance_between_two_cord(cord1: tuple, cord2: tuple):
+        return distance.distance(cord1, cord2).km
+    
+    @staticmethod
+    def get_lat_lon(city: list):
+        import re
+        replace_for_province = ['Tỉnh', 'Thành phố']
+        big_regex = re.compile('|'.join(map(re.escape, replace_for_province)))
+        list_city_geo = []
+        try:
+            for c in city:
+                temp = big_regex.sub('', c).strip()
+                index = util.vietnam_city_geo.list_city_name.index(temp.lower())
+                list_city_geo.append((
+                    util.vietnam_city_geo.list_lat[index],
+                    util.vietnam_city_geo.list_lon[index]
+                ))
+        except Exception as e:
+            for c in city:
+                list_city_geo.append(util.searchForLocation_v2(city))
+        return list_city_geo
+
+    @staticmethod
+    def get_neareast_airport(cord: list):
+        list_airport = util.vietnam_airport.load_list_airport()
+        neareast_airport = list_airport.first
+        neareast_cord = cord[0]
+        list_neareast_airport = []
+        for c in cord:
+            min_dis = util.get_distance_between_two_cord(c, list_airport[0].cord)
+            for airport in list_airport:
+                dist = util.get_distance_between_two_cord(c, airport.cord)
+                if dist < min_dis:
+                    min_dis = dist
+                    neareast_airport = airport
+                list_neareast_airport.append(neareast_airport)
+        # find the most frequent airport in the list -> neareast airport
+        neareast_airport = max(set(list_neareast_airport), key=list_neareast_airport.count)
+        min_dis = util.get_distance_between_two_cord(cord[0], neareast_airport.cord)
+        for c in cord:
+            dist = util.get_distance_between_two_cord(c, neareast_airport.cord)
+            if dist < min_dis:
+                min_dis = dist
+                neareast_cord = c
+        return (neareast_airport, neareast_cord)
     

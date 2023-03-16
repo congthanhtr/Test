@@ -1,7 +1,7 @@
 import requests
 
 
-class WeatherForecast:
+class WeatherForecastService:
 
     frequency_daily: str = "daily"
     frequency_hourly: str = "hourly"
