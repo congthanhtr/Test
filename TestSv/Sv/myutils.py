@@ -311,7 +311,7 @@ class util:
     @staticmethod
     def get_neareast_airport(cord: list):
         list_airport = util.vietnam_airport.load_list_airport()
-        neareast_airport = list_airport.first
+        neareast_airport = list_airport[0]
         neareast_cord = cord[0]
         list_neareast_airport = []
         for c in cord:

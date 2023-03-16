@@ -10,7 +10,7 @@ urlpatterns = [
     path('crawl', views.crawl, name='crawl'),
     path('recommend_tour', views.recommend_tour, name='recommend_tour'),
     path('weather_forecast', views.weather_forecast, name='weather_forecast'),
-    path('time_travel', views.time_travel, name='time_travel')
+    path('time_travel', views.time_travel, name='time_travel'),
     path('predict_vehicle', views.predict_vehicle,name="predict_vehicle"),
     path('predict_places',views.predict_places,name='predict_places')
 ]

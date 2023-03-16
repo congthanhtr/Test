@@ -210,6 +210,7 @@ def time_travel(request):
         result.status_code = HTTPStatus.METHOD_NOT_ALLOWED.value
 
     return JsonResponse(util.to_json(result))
+
 def predict_vehicle(request):
     API_ENDPOINT = BASE_API_URL+'predict_vehicle'
     result = ResultObject()
