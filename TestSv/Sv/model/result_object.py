@@ -6,7 +6,7 @@ class ResultObject:
         self.data = data
         self.status_code = status_code
 
-    def assgin_value(self, data, status_code: int):
+    def assign_value(self, data, status_code: int):
         self.data = data
         self.status_code = status_code
         return self
