@@ -5,9 +5,9 @@ from django.shortcuts import render
 from http import HTTPStatus
 
 from .crawler import Crawler
-from .model.weather_forcast import WeatherForecastService
+from .service.weather_forcast import WeatherForecastService
+from .service.recommend_service import RecommendService
 from .model.result_object import ResultObject
-from .model.time_travel import TimeTravelService
 from .myutils import util
 
 import pandas as pd
@@ -23,7 +23,6 @@ from .ml_model.linear_regression import lm_model
 # Create your views here.
 
 BASE_API_URL = 'api/v1/'
-service = None
 
 def index(request):
     API_ENDPOINT = BASE_API_URL+'index'
@@ -244,7 +243,7 @@ def predict_places(request):
             data = json.loads(request.body) # Data is an array
 
             # Load the data into a pandas DataFrame
-            df = pd.DataFrame([data['data']])
+            df = pd.DataFrame(data["data"])
 
             y_pred = lm_model.predict(df)
 
@@ -252,10 +251,37 @@ def predict_places(request):
             actualResult = round(y_pred[0])
 
             # Create a dictionary with the predicted labels
-            resData = result.assign_value(actualResult, 200)
+            result = result.assign_value(actualResult, 200)
+            print(result.data)
 
         except Exception as e:
             result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
             result.status_code = HTTPStatus.BAD_REQUEST.value  
     # Return the result as a JSON response
-    return JsonResponse(util.to_json(resData))
+    return JsonResponse(util.to_json(result))
+
+def recommend(request):
+    API_ENDPOINT = BASE_API_URL+'recommend'
+    result = ResultObject()
+    if request.method == 'POST':
+        try:
+            #region bodycontent
+            body = json.loads(request.body)
+            num_of_day = body['num_of_day'] # số ngày
+            num_of_night = body['num_of_night'] # số đêm
+            cities_from = body['from']
+            cities_to = body['to']
+            type_of_tour = body['type_of_tour']
+            cost_range = body['cost_range']
+            #endregion
+
+            recommend_service = RecommendService(num_of_day, num_of_night, cities_from, cities_to, type_of_tour, cost_range)
+            result = result.assign_value(recommend_service.recommend(), HTTPStatus.OK.value)
+        except Exception as e:
+            result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
+            result.status_code = HTTPStatus.BAD_REQUEST.value
+    else:
+        result.data = util.get_exception(API_ENDPOINT, util.NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE)
+        result.status_code = HTTPStatus.METHOD_NOT_ALLOWED.value
+
+    return JsonResponse(util.to_json(result))

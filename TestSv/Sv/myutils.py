@@ -332,3 +332,8 @@ class util:
                 neareast_cord = c
         return (neareast_airport, neareast_cord)
     
+    @staticmethod
+    def get_province_name_by_code(code: str):
+        from vietnam_provinces.enums import ProvinceEnum
+        return ProvinceEnum[f'P_{code}'].value.name
+    

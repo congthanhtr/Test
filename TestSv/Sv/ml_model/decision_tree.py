@@ -1,3 +1,4 @@
+import pickle
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn import tree
@@ -22,5 +23,7 @@ pred_X = inputs.drop(['Distance(km)',"planeTime(m)",'busTime(m)','Days','Nights'
 
 model = tree.DecisionTreeClassifier()
 model.fit(pred_X.values,pred_Y.values)
+# with open("./Sv/ml_model/result/predict_vihicles.pkl", "wb") as f:
+#     pickle.dump(model, f)
 # model.score(pred_X,pred_Y)
 # data_pred = model.predict([[20,2,1,1,0]]) 
