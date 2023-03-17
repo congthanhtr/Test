@@ -20,6 +20,8 @@ from .ml_model.decision_tree import model as dc_model
 
 from .ml_model.linear_regression import lm_model
 
+from .ml_model.logistic_regression import lgr_model
+
 # Create your views here.
 
 BASE_API_URL = 'api/v1/'
@@ -221,7 +223,7 @@ def predict_vehicle(request):
             # Load the data into a pandas DataFrame
             df = pd.DataFrame([data['data']])
 
-            y_pred = dc_model.predict(df)
+            y_pred = dc_model.predict(df.values)
 
             # Convert the predicted labels to a list
             predictions = y_pred.tolist()
@@ -246,13 +248,38 @@ def predict_places(request):
             # Load the data into a pandas DataFrame
             df = pd.DataFrame([data['data']])
 
-            y_pred = lm_model.predict(df)
+            y_pred = lm_model.predict(df.values)
 
             # make y_pred a rounded number
             actualResult = round(y_pred[0])
 
             # Create a dictionary with the predicted labels
             resData = result.assign_value(actualResult, 200)
+
+        except Exception as e:
+            result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
+            result.status_code = HTTPStatus.BAD_REQUEST.value  
+    # Return the result as a JSON response
+    return JsonResponse(util.to_json(resData))
+
+def predict_another_province(request):
+    API_ENDPOINT = BASE_API_URL+'predict_another_province'
+    result = ResultObject()
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body) # Data is an array
+
+            # Load the data into a pandas DataFrame
+            df = pd.DataFrame([data['data']])
+
+            y_pred = lgr_model.predict(df.values)
+   
+
+            # Convert the predicted labels to a list
+            predictions = y_pred.tolist()[0]
+
+            # Create a dictionary with the predicted labels
+            resData = result.assign_value(predictions, 200)
 
         except Exception as e:
             result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
