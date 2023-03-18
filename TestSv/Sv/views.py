@@ -183,33 +183,6 @@ def weather_forecast(request):
 
     return JsonResponse(util.to_json(result))
 
-def time_travel(request):
-    API_ENDPOINT =  BASE_API_URL+'time_travel'
-    result = ResultObject()
-    if request.method == "POST":
-        try:
-            body_content = json.loads(request.body)
-            city_from = body_content['from']
-            city_to = body_content['to']
-            from vietnam_provinces.enums import ProvinceEnum
-            province_from = []
-            for f in city_from:
-                province_from.append(ProvinceEnum[f'P_{f}'].value.name)
-            province_to = []
-            for t in city_to:
-                province_to.append(ProvinceEnum[f'P_{t}'].value.name)
-            time_travel_service = TimeTravelService()
-            result.data = time_travel_service.calculate_time_travel(province_from, province_to)
-            result.status_code = HTTPStatus.OK.value
-        except Exception as e:
-            result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
-            result.status_code = HTTPStatus.BAD_REQUEST.value
-    else:
-        result.data = util.get_exception(API_ENDPOINT, util.NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE)
-        result.status_code = HTTPStatus.METHOD_NOT_ALLOWED.value
-
-    return JsonResponse(util.to_json(result))
-
 def predict_vehicle(request):
     API_ENDPOINT = BASE_API_URL+'predict_vehicle'
     result = ResultObject()

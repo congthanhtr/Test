@@ -337,3 +337,13 @@ class util:
         from vietnam_provinces.enums import ProvinceEnum
         return ProvinceEnum[f'P_{code}'].value.name
     
+    @staticmethod
+    def divide_equally(num: int, div: int):
+        integer = num // div
+        remainder = num % div
+        splits = []
+        for i in range(div):
+            splits.append(integer)
+        for i in range(remainder):
+            splits[i] += 1
+        return splits
