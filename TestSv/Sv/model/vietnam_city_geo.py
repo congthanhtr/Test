@@ -17,7 +17,7 @@ class VietnamCityGeo(VietnamCityModel):
         self.list_city_name = []
         self.list_lat = []
         self.list_lon = []
-        text = open('static/vn.json', encoding='utf-8').read()
+        text = open('static/vn2.json', encoding='utf-8').read()
         text_json = json.loads(text)
         for city in text_json:
             self.list_city_name.append(city['admin_name'].lower())

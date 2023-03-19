@@ -51,6 +51,7 @@ class RecommendService:
         recommend_model.type_of_tour = self.type_of_tour
         recommend_model.cost_range = self.cost_range
         recommend_model.program = []
+        
         # validate input
         # validate input model goes here
 
