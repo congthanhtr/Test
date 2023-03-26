@@ -1,3 +1,4 @@
+import json
 import pickle
 import time
 import jsonpickle
@@ -15,6 +16,8 @@ from selenium.webdriver.common.by import By
 
 from .model.interesting_places import InterestingPlace
 from .model.vietnam_city_geo import VietnamCityGeo, VietnamCityBBox, VietnamAirport
+from .model.hotel_model import HotelModel
+from .model.interesting_places import InterestingPlace
 
 class util:
 
@@ -23,6 +26,7 @@ class util:
 
     API_KEY = open('static/api_key.txt').read()
     API_KEY_OPENTRIPMAP = open('static/api_key_opentripmap.txt').read()
+    
     NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE = {'msg': 'not supported this http method'}
     EXCEPTION_THROWN_AT_JSONRESPONSE = 'exception thrown at '
     EXCEPTION_MESSAGE_JSONRESPONSE = ''
@@ -36,7 +40,9 @@ class util:
     NOMINATIM_DETAIL_API = 'https://nominatim.openstreetmap.org/details.php?osmtype={}&osmid={}&format=json'
 
     OPENTRIPMAP_API = 'https://api.opentripmap.com/0.1/en/places/bbox?lon_min={}&lon_max={}&lat_min={}&lat_max={}&format=json&src_attr=osm&limit={}&apikey={}' # must format with {lonmin, lonmax, latmin, latmax, maxobject, apikey}
-    OPENTRIPMAP__DETAIL_PLACE_API = 'https://api.opentripmap.com/0.1/en/places/xid/{}?apikey={}'
+    OPENTRIPMAP_DETAIL_PLACE_API = 'https://api.opentripmap.com/0.1/en/places/xid/{}?apikey={}'
+    OPENTRIPMAP_HOTELS_API = 'https://api.opentripmap.com/0.1/en/places/radius?radius=20000&lon={}&lat={}&kinds=other_hotels&limit=20&apikey={}'
+    OPENTRIPMAP_POI_API = 'https://api.opentripmap.com/0.1/en/places/radius?radius=20000&lon={}&lat={}&kinds={}&limit=20&apikey={}'
     
     @staticmethod
     def get_exception(at: str, msg: str) -> dict:
@@ -259,7 +265,7 @@ class util:
                 response = response.json()
                 for poi in response:
                     xid = poi['xid']
-                    detail_url = util.OPENTRIPMAP__DETAIL_PLACE_API.format(xid, util.API_KEY_OPENTRIPMAP)
+                    detail_url = util.OPENTRIPMAP_DETAIL_PLACE_API.format(xid, util.API_KEY_OPENTRIPMAP)
                     detail_response = requests.get(detail_url)
                     if (not detail_response.raise_for_status()):
                         detail_response = detail_response.json()
@@ -286,6 +292,25 @@ class util:
         return list_interesting_places
     
     @staticmethod
+    def get_list_poi_by_cord(cord: tuple, filter_tour: list = None):
+        list_poi = []
+        url = util.OPENTRIPMAP_POI_API.format(cord[1], cord[0], 'interesting_places', util.API_KEY_OPENTRIPMAP)
+        response = requests.get(url=url)
+        if not response.raise_for_status():
+            pois = response.json()['features']
+            for poi in pois:
+                properties = poi['properties']
+                geometry = poi['geometry']
+                if not util.is_null_or_empty(properties['name']):
+                    list_poi.append(InterestingPlace(
+                        vi_name=properties['name'],
+                        lat=geometry['coordinates'][1],
+                        lng=geometry['coordinates'][0]
+                    ))
+        
+        return list_poi
+
+    @staticmethod
     def get_distance_between_two_cord(cord1: tuple, cord2: tuple):
         return distance.distance(cord1, cord2).km
     
@@ -305,7 +330,7 @@ class util:
                 ))
         except Exception as e:
             for c in city:
-                list_city_geo.append(util.searchForLocation_v2(city))
+                    list_city_geo.append(util.searchForLocation_v2(city))
         return list_city_geo
 
     @staticmethod
@@ -315,18 +340,18 @@ class util:
         neareast_cord = cord[0]
         list_neareast_airport = []
         for c in cord:
-            min_dis = util.get_distance_between_two_cord(c, list_airport[0].cord)
+            min_dis = util.get_distance_between_two_cord(c, list_airport[0].get_cord())
             for airport in list_airport:
-                dist = util.get_distance_between_two_cord(c, airport.cord)
+                dist = util.get_distance_between_two_cord(c, airport.get_cord())
                 if dist < min_dis:
                     min_dis = dist
                     neareast_airport = airport
                 list_neareast_airport.append(neareast_airport)
         # find the most frequent airport in the list -> neareast airport
         neareast_airport = max(set(list_neareast_airport), key=list_neareast_airport.count)
-        min_dis = util.get_distance_between_two_cord(cord[0], neareast_airport.cord)
+        min_dis = util.get_distance_between_two_cord(cord[0], neareast_airport.get_cord())
         for c in cord:
-            dist = util.get_distance_between_two_cord(c, neareast_airport.cord)
+            dist = util.get_distance_between_two_cord(c, neareast_airport.get_cord())
             if dist < min_dis:
                 min_dis = dist
                 neareast_cord = c
@@ -347,3 +372,22 @@ class util:
         for i in range(remainder):
             splits[i] += 1
         return splits
+    
+    @staticmethod
+    def get_hotel_list_from_city_name(city: str):
+        hotel_list = []
+        city_cord = util.get_lat_lon([city])[0]
+        url = util.OPENTRIPMAP_HOTELS_API.format(city_cord[1], city_cord[0], util.API_KEY_OPENTRIPMAP)
+        response = requests.get(url)
+        if not response.raise_for_status():
+            hotels = response.json()['features']
+            for hotel in hotels:
+                properties = hotel['properties']
+                geometry = hotel['geometry']
+                if not util.is_null_or_empty(properties['name']):
+                    hotel_list.append(HotelModel(
+                        name=properties['name'],
+                        lat=geometry['coordinates'][1],
+                        lng=geometry['coordinates'][0]
+                    ))
+        return hotel_list

@@ -1,11 +1,9 @@
-class InterestingPlace:
-    vi_name: str = ''
-    province: str = ''
-    summary: str = ''
-    image: str = ''
+from .has_coord import HasCoord
 
-    def __init__(self, vi_name=None, province=None, summary=None, image=None) -> None:
+class InterestingPlace(HasCoord):
+    vi_name: str = ''
+
+    def __init__(self, vi_name=None, lat=None, lng=None) -> None:
         self.vi_name = vi_name
-        self.province = province
-        self.summary = summary
-        self.image = image
+        self.lat = lat
+        self.lng = lng

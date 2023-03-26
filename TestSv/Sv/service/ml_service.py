@@ -18,10 +18,6 @@ class MachineLearningService:
     PREDICT_N_PLACES_PATH = './Sv/ml_model/result/predict_n_places.pkl'
     PREDICT_VIHICLES_PATH = './Sv/ml_model/result/predict_vihicles.pkl'
 
-    def __init__(self) -> None:
-        self.model = None
-        self.model_path = ''
-
     def load_model(self, model_path):
         self.model_path = model_path
         f = open(self.model_path, 'rb')

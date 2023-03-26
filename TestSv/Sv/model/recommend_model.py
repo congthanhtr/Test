@@ -1,4 +1,8 @@
+from .hotel_model import HotelModel
+
+
 class TourProgramModel:
+    hotel: HotelModel
     no_of_day: int = 0
     province = None
     pois: list = []

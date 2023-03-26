@@ -1,4 +1,5 @@
 import json
+from .vietnam_airport_model import VietnamAirportModel
 
 class VietnamCityModel:
     def load_list(self):
@@ -12,17 +13,20 @@ class VietnamCityGeo(VietnamCityModel):
     list_city_name = []
     list_lat = []
     list_lon = []
+    list_boundary_box = []
 
     def load_list(self):
         self.list_city_name = []
         self.list_lat = []
         self.list_lon = []
-        text = open('static/vn2.json', encoding='utf-8').read()
+        self.list_boundary_box = []
+        text = open('static/vn_provinces.json', encoding='utf-8').read()
         text_json = json.loads(text)
         for city in text_json:
             self.list_city_name.append(city['admin_name'].lower())
             self.list_lat.append(float(city['lat']))
             self.list_lon.append(float(city['lng']))
+            self.list_boundary_box.append(city['boundary_box'])
         return self
     
 
@@ -49,15 +53,6 @@ class VietnamCityBBox(VietnamCityModel):
             self.list_max_lat.append(str(text_json[city][3]))
         
         return self        
-
-
-class VietnamAirportModel:
-    code: str
-    cord: tuple
-
-    def __init__(self, code, lat, lon) -> None:
-        self.code = code
-        self.cord = (lat, lon)
 
 
 class VietnamAirport(VietnamCityModel):

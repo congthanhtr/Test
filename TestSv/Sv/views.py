@@ -7,6 +7,8 @@ from http import HTTPStatus
 from .crawler import Crawler
 from .service.weather_forcast import WeatherForecastService
 from .service.recommend_service import RecommendService
+from .service.time_travel import TimeTravelService
+from .service.ml_service import MachineLearningService
 from .model.result_object import ResultObject
 from .myutils import util
 
@@ -225,7 +227,6 @@ def predict_places(request):
 
             # Create a dictionary with the predicted labels
             result = result.assign_value(actualResult, 200)
-            print(result.data)
 
         except Exception as e:
             result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
@@ -246,10 +247,13 @@ def recommend(request):
             cities_to = body['to']
             type_of_tour = body['type_of_tour']
             cost_range = body['cost_range']
+            hotel_filter_condition = body['hotel_filter_condition']
             #endregion
 
-            recommend_service = RecommendService(num_of_day, num_of_night, cities_from, cities_to, type_of_tour, cost_range)
-            result = result.assign_value(recommend_service.recommend(), HTTPStatus.OK.value)
+            time_travel_service = TimeTravelService()
+            ml_service = MachineLearningService()
+            recommend_service = RecommendService(num_of_day, num_of_night, cities_from, cities_to, type_of_tour, cost_range, hotel_filter_condition, ml_service, time_travel_service)
+            result = result.assign_value(recommend_service.recommend_v2(), HTTPStatus.OK.value)
         except Exception as e:
             result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
             result.status_code = HTTPStatus.BAD_REQUEST.value
