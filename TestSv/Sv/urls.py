@@ -12,5 +12,6 @@ urlpatterns = [
     path('weather_forecast', views.weather_forecast, name='weather_forecast'),
     path('predict_vehicle', views.predict_vehicle,name="predict_vehicle"),
     path('predict_places',views.predict_places,name='predict_places'),
-    path('recommend', views.recommend,name='recommend')
+    path('recommend', views.recommend, name='recommend'),
+    path('predict_another_province',views.predict_another_province,name='predict_another_province'),
 ]
