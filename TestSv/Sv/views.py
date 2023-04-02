@@ -9,7 +9,7 @@ from .service.weather_forcast import WeatherForecastService
 from .service.recommend_service import RecommendService
 from .service.time_travel import TimeTravelService
 from .service.ml_service import MachineLearningService
-from .model.result_object import ResultObject
+from .model.result_object import ResultObject, ErrorResultObjectType
 from .myutils import util
 
 import pandas as pd
@@ -22,7 +22,7 @@ from .ml_model.decision_tree import model as dc_model
 
 from .ml_model.linear_regression import lm_model
 
-from .ml_model.logistic_regression import lgr_model
+# from .ml_model.logistic_regression import lgr_model
 
 # Create your views here.
 
@@ -255,16 +255,13 @@ def recommend(request):
             time_travel_service = TimeTravelService()
             ml_service = MachineLearningService()
             recommend_service = RecommendService(num_of_day, num_of_night, cities_from, cities_to, type_of_tour, cost_range, hotel_filter_condition, ml_service, time_travel_service)
-            result = result.assign_value(recommend_service.recommend_v2(), HTTPStatus.OK.value)
+            result = result.assign_value(data=recommend_service.recommend_v2(), status_code=HTTPStatus.OK.value)
         except Exception as e:
-            result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
-            result.status_code = HTTPStatus.BAD_REQUEST.value
+            result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
     else:
-        result.data = util.get_exception(API_ENDPOINT, util.NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE)
-        result.status_code = HTTPStatus.METHOD_NOT_ALLOWED.value
+        result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
 
     return JsonResponse(util.to_json(result))
-    return JsonResponse(util.to_json(resData))
 
 def predict_another_province(request):
     API_ENDPOINT = BASE_API_URL+'predict_another_province'
@@ -290,3 +287,43 @@ def predict_another_province(request):
             result.status_code = HTTPStatus.BAD_REQUEST.value  
     # Return the result as a JSON response
     return JsonResponse(util.to_json(resData))
+
+def submit_cities_to(request):
+    API_ENDPOINT = BASE_API_URL + 'submit_cities_to'
+    result = ResultObject()
+    if request.method == 'POST':
+        try:
+            # region get request body content
+            body = json.loads(request.body)
+            data = body['data']
+            user_input = body['input']
+            # endregion
+            recommend_service = RecommendService(user_input=user_input)
+            result.data = recommend_service.submit_cities_to(data)
+            result.status_code = HTTPStatus.OK.value 
+        except Exception as e:
+            result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+    else:
+        result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
+
+    return JsonResponse(util.to_json(result))
+
+def get_hotel_and_list_poi(request):
+    API_ENDPOINT = BASE_API_URL + 'get_hotel_and_list_poi'
+    result = ResultObject()
+    if request.method == 'POST':
+        try:
+            # region get request body content
+            body = json.loads(request.body)
+            data = body['data']
+            user_input = body['input']
+            # endregion
+            recommend_service = RecommendService(user_input=user_input)
+            result.data = recommend_service.get_hotel_and_list_poi(data)
+            result.status_code = HTTPStatus.OK.value 
+        except Exception as e:
+            result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+    else:
+        result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
+
+    return JsonResponse(util.to_json(result))

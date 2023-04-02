@@ -8,13 +8,11 @@ import urllib.parse
 
 import googlemaps
 import wikipediaapi
-from deep_translator import GoogleTranslator
 from geopy import distance
 
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 
-from .model.interesting_places import InterestingPlace
 from .model.vietnam_city_geo import VietnamCityGeo, VietnamCityBBox, VietnamAirport
 from .model.hotel_model import HotelModel
 from .model.interesting_places import InterestingPlace
@@ -22,12 +20,11 @@ from .model.interesting_places import InterestingPlace
 class util:
 
     wiki = wikipediaapi.Wikipedia('vi')
-    translator = GoogleTranslator(source='en', target='vi')
 
     API_KEY = open('static/api_key.txt').read()
     API_KEY_OPENTRIPMAP = open('static/api_key_opentripmap.txt').read()
     
-    NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE = {'msg': 'not supported this http method'}
+    NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE = 'not supported this http method'
     EXCEPTION_THROWN_AT_JSONRESPONSE = 'exception thrown at '
     EXCEPTION_MESSAGE_JSONRESPONSE = ''
 
@@ -41,8 +38,8 @@ class util:
 
     OPENTRIPMAP_API = 'https://api.opentripmap.com/0.1/en/places/bbox?lon_min={}&lon_max={}&lat_min={}&lat_max={}&format=json&src_attr=osm&limit={}&apikey={}' # must format with {lonmin, lonmax, latmin, latmax, maxobject, apikey}
     OPENTRIPMAP_DETAIL_PLACE_API = 'https://api.opentripmap.com/0.1/en/places/xid/{}?apikey={}'
-    OPENTRIPMAP_HOTELS_API = 'https://api.opentripmap.com/0.1/en/places/radius?radius=20000&lon={}&lat={}&kinds=other_hotels&limit=20&apikey={}'
-    OPENTRIPMAP_POI_API = 'https://api.opentripmap.com/0.1/en/places/radius?radius=20000&lon={}&lat={}&kinds={}&limit=20&apikey={}'
+    OPENTRIPMAP_HOTELS_API = 'https://api.opentripmap.com/0.1/en/places/radius?radius=50000&lon={}&lat={}&kinds=other_hotels&limit=20&apikey={}'
+    OPENTRIPMAP_POI_API = 'https://api.opentripmap.com/0.1/en/places/radius?radius=50000&lon={}&lat={}&kinds={}&limit=20&apikey={}'
     
     @staticmethod
     def get_exception(at: str, msg: str) -> dict:
@@ -144,7 +141,7 @@ class util:
         if response:
             location = response[0]
             # return {'lat': location['lat'], 'lng': location['lon']}
-            return (location['lat'], location['lon'])
+            return (float(location['lat']), float(location['lon']))
             # return location
     
     @staticmethod
@@ -232,14 +229,6 @@ class util:
             if 'city' in address:
                 city = address['city']
             return city
-        
-    @staticmethod
-    def translate(text: str):
-        return util.translator.translate(text)
-
-    @staticmethod
-    def translate_to_vietnamese(text: str):
-        return util.translate(text=text)
     
     @staticmethod
     def get_boundary_box(address: str):
@@ -309,6 +298,60 @@ class util:
                     ))
         
         return list_poi
+    
+    @staticmethod
+    def get_list_poi_by_cord_v2(cord: tuple, filter_tour: list = None):
+        list_poi = []
+        url = util.OPENTRIPMAP_POI_API.format(cord[1], cord[0], 'interesting_places', util.API_KEY_OPENTRIPMAP)
+        response = requests.get(url=url)
+        if not response.raise_for_status():
+            pois = response.json()['features']
+            for poi in pois:
+                properties = poi['properties']
+                geometry = poi['geometry']
+                if not util.is_null_or_empty(properties['name']):
+                    list_poi.append(InterestingPlace(
+                        xid=properties['xid'],
+                        vi_name=properties['name'],
+                        lat=geometry['coordinates'][1],
+                        lng=geometry['coordinates'][0]
+                    ))
+        
+        return list_poi
+    
+    @staticmethod
+    def get_poi_detail(xid: str):
+        url = util.OPENTRIPMAP_DETAIL_PLACE_API.format(xid, util.API_KEY_OPENTRIPMAP)
+        response = requests.get(url)
+        if not response.raise_for_status():
+            response = response.json()
+            # init default value
+            name = None
+            lat = None
+            lng = None
+            description = None
+            preview = None
+
+            if 'wikipedia_extracts' in response:
+                wikipedia_extract = response['wikipedia_extracts']
+                description = wikipedia_extract['text']
+            if 'point' in response:
+                point = response['point']
+                lat = point['lat']
+                lng = point['lon']
+            if 'name' in response:
+                name = response['name']
+            if 'preview' in response:
+                preview = response['preview']
+            detail = InterestingPlace(
+                vi_name=name,
+                xid=xid,
+                description=description,
+                preview=preview,
+                lat=lat,
+                lng=lng
+            )
+            return detail
 
     @staticmethod
     def get_distance_between_two_cord(cord1: tuple, cord2: tuple):
@@ -322,13 +365,14 @@ class util:
         list_city_geo = []
         try:
             for c in city:
-                temp = big_regex.sub('', c).strip()
-                index = util.vietnam_city_geo.list_city_name.index(temp.lower())
+                temp = big_regex.sub('', c).strip().lower()
+                index = util.vietnam_city_geo.list_city_name.index(temp)
                 list_city_geo.append((
                     util.vietnam_city_geo.list_lat[index],
                     util.vietnam_city_geo.list_lon[index]
                 ))
         except Exception as e:
+            print(str(e))
             for c in city:
                     list_city_geo.append(util.searchForLocation_v2(city))
         return list_city_geo
@@ -378,7 +422,10 @@ class util:
         hotel_list = []
         city_cord = util.get_lat_lon([city])[0]
         url = util.OPENTRIPMAP_HOTELS_API.format(city_cord[1], city_cord[0], util.API_KEY_OPENTRIPMAP)
+        print('get hotel time each request')
+        start = time.time()
         response = requests.get(url)
+        print(time.time() - start)
         if not response.raise_for_status():
             hotels = response.json()['features']
             for hotel in hotels:

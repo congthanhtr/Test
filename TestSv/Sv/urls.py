@@ -14,4 +14,5 @@ urlpatterns = [
     path('predict_places',views.predict_places,name='predict_places'),
     path('recommend', views.recommend, name='recommend'),
     path('predict_another_province',views.predict_another_province,name='predict_another_province'),
+    path('submit_cities_to', views.submit_cities_to, name='submit_cities_to')
 ]
