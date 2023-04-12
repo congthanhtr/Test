@@ -1,6 +1,7 @@
 import json
 import pickle
 import time
+from django.conf import settings
 import jsonpickle
 import pandas as pd
 import requests
@@ -27,6 +28,7 @@ class util:
     NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE = 'not supported this http method'
     EXCEPTION_THROWN_AT_JSONRESPONSE = 'exception thrown at '
     EXCEPTION_MESSAGE_JSONRESPONSE = ''
+    MAXIUM_DISTANCE_FROM_HOTEL_TO_POI = 30
 
     vietnam_city_geo = VietnamCityGeo().load_list()
     vietnam_city_bbox = VietnamCityBBox().load_list()
@@ -320,52 +322,62 @@ class util:
         return list_poi
     
     @staticmethod
+    def get_list_poi_by_cord_v3(cord: tuple, list_poi: list = None, filter_tour: list = None): # get list from by db
+        list_pois = []
+        for poi in list_poi:
+            ip = InterestingPlace(
+                vi_name=poi['name'],
+                xid=poi['xid'],
+                lat=poi['point']['lat'],
+                lng=poi['point']['lon'],
+                description=poi['description'],
+                preview=poi['preview']
+            )
+            distance = util.get_distance_between_two_cord(cord1=cord, cord2=ip.get_cord())
+            if distance < util.MAXIUM_DISTANCE_FROM_HOTEL_TO_POI:
+                list_pois.append(ip)
+        return list_pois
+    
+    @staticmethod
     def get_poi_detail(xid: str):
+        detail = InterestingPlace()
         url = util.OPENTRIPMAP_DETAIL_PLACE_API.format(xid, util.API_KEY_OPENTRIPMAP)
         response = requests.get(url)
+        
         if not response.raise_for_status():
             response = response.json()
             # init default value
-            name = None
-            lat = None
-            lng = None
-            description = None
-            preview = None
-
             if 'wikipedia_extracts' in response:
                 wikipedia_extract = response['wikipedia_extracts']
-                description = wikipedia_extract['text']
+                detail.description = wikipedia_extract['text']
             if 'point' in response:
                 point = response['point']
-                lat = point['lat']
-                lng = point['lon']
+                detail.lat = point['lat']
+                detail.lng = point['lon']
             if 'name' in response:
-                name = response['name']
+                detail.vi_name = response['name']
             if 'preview' in response:
-                preview = response['preview']
-            detail = InterestingPlace(
-                vi_name=name,
-                xid=xid,
-                description=description,
-                preview=preview,
-                lat=lat,
-                lng=lng
-            )
-            return detail
+                detail.preview = response['preview']
+            
+        return detail
 
     @staticmethod
     def get_distance_between_two_cord(cord1: tuple, cord2: tuple):
         return distance.distance(cord1, cord2).km
     
     @staticmethod
-    def get_lat_lon(city: list):
+    def preprocess_city_name(city: str, lower=False):
         import re
         replace_for_province = ['Tỉnh', 'Thành phố']
         big_regex = re.compile('|'.join(map(re.escape, replace_for_province)))
+        return big_regex.sub('', city).strip().lower() if lower else big_regex.sub('', city).strip()
+    
+    @staticmethod
+    def get_lat_lon(city: list):
         list_city_geo = []
         try:
             for c in city:
-                temp = big_regex.sub('', c).strip().lower()
+                temp = util.preprocess_city_name(c, True)
                 index = util.vietnam_city_geo.list_city_name.index(temp)
                 list_city_geo.append((
                     util.vietnam_city_geo.list_lat[index],
@@ -422,10 +434,7 @@ class util:
         hotel_list = []
         city_cord = util.get_lat_lon([city])[0]
         url = util.OPENTRIPMAP_HOTELS_API.format(city_cord[1], city_cord[0], util.API_KEY_OPENTRIPMAP)
-        print('get hotel time each request')
-        start = time.time()
         response = requests.get(url)
-        print(time.time() - start)
         if not response.raise_for_status():
             hotels = response.json()['features']
             for hotel in hotels:
@@ -438,3 +447,10 @@ class util:
                         lng=geometry['coordinates'][0]
                     ))
         return hotel_list
+    
+    @staticmethod
+    def get_db_handle(connection_string=settings.CONNECTION_STRING, db_name=None):
+        from pymongo import MongoClient
+        client = MongoClient(connection_string)
+        db = client[db_name]
+        return db

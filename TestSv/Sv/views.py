@@ -250,11 +250,24 @@ def recommend(request):
             type_of_tour = body['type_of_tour']
             cost_range = body['cost_range']
             hotel_filter_condition = body['hotel_filter_condition']
+            tour_filter_condition = body['tour_filter_condition']
             #endregion
 
             time_travel_service = TimeTravelService()
             ml_service = MachineLearningService()
-            recommend_service = RecommendService(num_of_day, num_of_night, cities_from, cities_to, type_of_tour, cost_range, hotel_filter_condition, ml_service, time_travel_service)
+            db = util.get_db_handle(db_name='recommender')
+            recommend_service = RecommendService(
+                num_of_day=num_of_day, 
+                num_of_night=num_of_night, 
+                cities_from=cities_from, 
+                cities_to=cities_to, 
+                type_of_tour=type_of_tour, 
+                cost_range=cost_range, 
+                hotel_filter_condition=hotel_filter_condition,
+                tour_filter_condition=tour_filter_condition, 
+                ml_service=ml_service, 
+                time_travel_service=time_travel_service,
+                db=db)
             result = result.assign_value(data=recommend_service.recommend_v2(), status_code=HTTPStatus.OK.value)
         except Exception as e:
             result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)

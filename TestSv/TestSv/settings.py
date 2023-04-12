@@ -21,7 +21,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-fey4v^qc#gs$l(t-yr!hb%*bssnnigew^t+-yw5@lmf4&==h-w'
+from dotenv import load_dotenv
+
+load_dotenv()
+SECRET_KEY = os.getenv('SECRET_KEY')
+CONNECTION_STRING = os.getenv('CONNECTION_STRING')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -40,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Sv'
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -76,14 +81,6 @@ WSGI_APPLICATION = 'TestSv.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
-    #     'NAME': 'testSv',
-    #     'USER': 'postgres',
-    #     'PASSWORD': '1',
-    #     'HOST': 'localhost',
-    #     'PORT': '5432',
-    # }
 }
 
 

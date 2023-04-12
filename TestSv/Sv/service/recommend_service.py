@@ -4,6 +4,7 @@ from .ml_service import MachineLearningService
 from .time_travel import TimeTravelService
 from ..myutils import util
 
+from pymongo.database import Database
 import pandas as pd
 
 from ..model.recommend_model import RecommendModel, TourProgramModel
@@ -20,9 +21,12 @@ class RecommendService:
     type_of_tour: int = 0
     cost_range: float = 0.0
     hotel_filter_condition: list = []
+    tour_filter_condition: list = []
 
     ml_service: MachineLearningService = None
     time_travel_service: TimeTravelService = None
+
+    db: Database = None
 
     NUM_OF_HOTEL_FROM_RESPONSE = 2
 
@@ -35,8 +39,10 @@ class RecommendService:
         type_of_tour: int,
         cost_range: float,
         hotel_filter_condition,
+        tour_filter_condition = None,
         ml_service = None,
-        time_travel_service = None
+        time_travel_service = None,
+        db: Database = None
     ) -> None:
         self.num_of_day = num_of_day
         self.num_of_night = num_of_night
@@ -55,9 +61,12 @@ class RecommendService:
         self.type_of_tour = type_of_tour
         self.cost_range = cost_range
         self.hotel_filter_condition = hotel_filter_condition
+        self.tour_filter_condition = tour_filter_condition
 
         self.ml_service = ml_service
         self.time_travel_service = time_travel_service
+
+        self.db = db
 
     def submit_cities_to(self):
         pass
@@ -126,14 +135,26 @@ class RecommendService:
            ]
         ]
         '''
+        filter = None
+        if self.tour_filter_condition and len(self.tour_filter_condition) > 0:
+            filter = '|'.join(self.tour_filter_condition)
+            filter = f'[{filter}]'
+
         for hotel_in_province in list_hotel_by_each_province:
             list_pois_by_hotel_in_province = []
+            cities_to_index = list_hotel_by_each_province.index(hotel_in_province)
             for hotel in hotel_in_province:
-                pois = util.get_list_poi_by_cord_v2(hotel.get_cord())
+                condition = {}
+                condition['province_name'] = util.preprocess_city_name(self.cities_to[cities_to_index])
+                if filter:
+                    condition['kinds'] = {
+                        '$regex': filter
+                    }
+                print(condition)
+                collection_poi = self.db.get_collection('vn_pois').find(condition)
+                pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=collection_poi)
                 list_pois_by_hotel_in_province.append(pois)
             list_pois_by_hotel.append(list_pois_by_hotel_in_province)
-        print('start building tour')
-        start = time.time()
         # build program tour
         for i in range(0, len(list_travel_time_by_each_vihicle)):
             # get list travel time (like travel time from A to B (minutes), B to C,...)
@@ -179,10 +200,10 @@ class RecommendService:
                         for poi in sub_pois:
                             list_sub_pois_coord.append(poi.get_cord())
                         #   call to get travel order
-                        # tour_program.pois = self.to_travel_order(sub_pois, list_sub_pois_coord)
-                        travel_order = self.to_travel_order(sub_pois, list_sub_pois_coord)
-                        for travel in travel_order:
-                            tour_program.pois.append(util.get_poi_detail(travel.xid))
+                        tour_program.pois = self.to_travel_order(sub_pois, list_sub_pois_coord)
+                        # travel_order = self.to_travel_order(sub_pois, list_sub_pois_coord)
+                        # for travel in travel_order:
+                        #     tour_program.pois.append(util.get_poi_detail(travel.xid))
                         # endregion
                         program_day.append(tour_program)
                         no_of_day += 1
@@ -190,9 +211,7 @@ class RecommendService:
                 program.append(program_day)
             recommend_model.program.append(program)
 
-        print(time.time() - start)
         # predict places
-
         return recommend_model
 
     def recommend(self):

@@ -8,3 +8,4 @@ api_key_opentripmap.txt
 api_key.txt
 api_key_bing.txt
 api_key_amadeus.json
+.env
