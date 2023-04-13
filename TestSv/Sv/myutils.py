@@ -1,5 +1,6 @@
 import json
 import pickle
+from random import sample
 import time
 from django.conf import settings
 import jsonpickle
@@ -447,6 +448,18 @@ class util:
                         lng=geometry['coordinates'][0]
                     ))
         return hotel_list
+    
+    @staticmethod
+    def get_hotel_list_from_city_name_v2(list_hotels: list): # get hotel list from city in db
+        list_hotel = []
+        for hotel in list_hotels:
+            list_hotel.append(HotelModel(
+                name=hotel['name'],
+                lat=hotel['lat'],
+                lng=hotel['lng']
+            ))
+        return list_hotel
+        
     
     @staticmethod
     def get_db_handle(connection_string=settings.CONNECTION_STRING, db_name=None):

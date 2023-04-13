@@ -117,10 +117,28 @@ class RecommendService:
             [BNHoltel1, BNHotel2]
         ]
         '''
+        hotel_filter = None
+        if self.hotel_filter_condition and len(self.tour_filter_condition) > 0:
+            tour_filter = '|'.join(self.tour_filter_condition)
+            tour_filter = f'[{tour_filter}]'
+        if not hotel_filter:
+            hotel_filter = 'other_hotels'
         for city in self.cities_to:
-            hotels = util.get_hotel_list_from_city_name(city)
+            condition = {}
+            condition['province_name'] = util.preprocess_city_name(city=city)
+            if hotel_filter:
+                condition['kinds'] = {
+                    '$regex': hotel_filter
+                }
+            else:
+                condition['kinds'] = {
+                    '$regex': 'other_hotels'
+                }
+            collection_hotel = self.db.get_collection('vn_hotels').find(condition)
+            hotels = util.get_hotel_list_from_city_name_v2(collection_hotel)
             hotels = sample(hotels, self.NUM_OF_HOTEL_FROM_RESPONSE) 
             list_hotel_by_each_province.append(hotels)
+
         # get list pois by hotel
         list_pois_by_hotel: list[list[list[InterestingPlace]]] = []
         '''
@@ -135,10 +153,10 @@ class RecommendService:
            ]
         ]
         '''
-        filter = None
+        tour_filter = None
         if self.tour_filter_condition and len(self.tour_filter_condition) > 0:
-            filter = '|'.join(self.tour_filter_condition)
-            filter = f'[{filter}]'
+            tour_filter = '|'.join(self.tour_filter_condition)
+            tour_filter = f'[{tour_filter}]'
 
         for hotel_in_province in list_hotel_by_each_province:
             list_pois_by_hotel_in_province = []
@@ -146,15 +164,15 @@ class RecommendService:
             for hotel in hotel_in_province:
                 condition = {}
                 condition['province_name'] = util.preprocess_city_name(self.cities_to[cities_to_index])
-                if filter:
+                if tour_filter:
                     condition['kinds'] = {
-                        '$regex': filter
+                        '$regex': tour_filter
                     }
-                print(condition)
                 collection_poi = self.db.get_collection('vn_pois').find(condition)
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=collection_poi)
                 list_pois_by_hotel_in_province.append(pois)
             list_pois_by_hotel.append(list_pois_by_hotel_in_province)
+
         # build program tour
         for i in range(0, len(list_travel_time_by_each_vihicle)):
             # get list travel time (like travel time from A to B (minutes), B to C,...)
@@ -369,6 +387,10 @@ class RecommendService:
         mstree = minimum_spanning_tree(data).toarray()
         return breadth_first_order(mstree, i_start=0, directed=False, return_predecessors=False)
     
+    def get_path_dijkstra(self, data):
+        from scipy.sparse.csgraph import dijkstra, breadth_first_order
+        mstree = dijkstra(data)
+        return breadth_first_order(mstree, i_start=0, directed=False, return_predecessors=False)
     def to_distance_matrix(self, list_cord: list):
         province_distance_matrix = []
         for city in list_cord:
@@ -382,7 +404,7 @@ class RecommendService:
     def to_travel_order(self, source, list_cord_of_source):
         if len(source) <= 1:
             return source
-        mstree = self.get_minium_spanning_tree(self.to_distance_matrix(list_cord_of_source))
+        mstree = self.get_path_dijkstra(self.to_distance_matrix(list_cord_of_source))
         temp = []
         for node in mstree:
             temp.append(source[node])
