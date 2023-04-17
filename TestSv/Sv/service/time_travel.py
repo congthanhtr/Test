@@ -5,12 +5,13 @@ class TimeTravelService:
     distance: float = 0.0
     flight_time: float = 0
     driving_time: float = 0
+    railway_time: float = 0
 
     DRIVING_SPEED = 50
 
     flight_time_xlxs = pd.read_excel('static/flight_time.xlsx')
 
-    def calculate_time_travel(self, city_from: list, city_to: list):
+    def calculate_time_travel(self, city_from: list, city_to: list, collection=None):
         from_location = util.get_lat_lon(city_from)
         to_location = util.get_lat_lon(city_to)
 
@@ -19,7 +20,8 @@ class TimeTravelService:
         neareast_airport_to, cord_neareast_airport_to = util.get_neareast_airport(to_location)
 
         self.distance = util.get_distance_between_two_cord(from_location, cord_neareast_airport_to)
-        self.driving_time = self._calculate_driving_time()
+        self.driving_time = self._calculate_driving_time(collection=collection, city_from=city_from[0], city_to=city_to[0])
+        self.railway_time = self._calculate_railway_time()
 
         # calculate flight time (include driving time from airport to destination)
         self.flight_time = self._calculate_flight_time(neareast_airport_from.code, neareast_airport_to.code)
@@ -28,12 +30,16 @@ class TimeTravelService:
             self.flight_time += self._calculate_driving_time(util.get_distance_between_two_cord(neareast_airport_to.get_cord(), cord_neareast_airport_to))
         return self
 
-    def _calculate_driving_time(self, distance=None) -> float:
-        if distance is not None:
+    def _calculate_driving_time(self, distance=None, collection=None, city_from=None, city_to=None) -> float:
+        if collection is not None and city_from is not None and city_to is not None:
+            cl = collection.find({
+                'from': util.preprocess_city_name(city_from),
+                'to': util.preprocess_city_name(city_to)
+            })
+            for driving in cl:
+                return driving['driving_time']
+        elif distance is not None:
             return (distance / self.DRIVING_SPEED) * 60.0
-        return (self.distance / self.DRIVING_SPEED) * 60.0
-    
-    def _calculate_driving_time_with_distance(self, distance):
         return (self.distance / self.DRIVING_SPEED) * 60.0
 
     def _calculate_flight_time(self, airport_from, airport_to):
@@ -54,3 +60,8 @@ class TimeTravelService:
                 _flight_time = 0
 
         return _flight_time
+    
+    def _calculate_railway_time(self, distance=None):
+        if distance is not None:
+            return (distance/50.0)*60
+        return (self.distance/50)*60

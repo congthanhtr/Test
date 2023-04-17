@@ -18,9 +18,10 @@ import traceback, sys
 from googleplaces import GooglePlaces, types, lang, ranking
 
 # ML models
-from .ml_model.decision_tree import model as dc_model
+# from .ml_model.decision_tree import model as dc_model
+# from .ml_model.decision_tree import inputs
 
-from .ml_model.linear_regression import lm_model
+# from .ml_model.linear_regression import lm_model
 
 # from .ml_model.logistic_regression import lgr_model
 
@@ -249,6 +250,7 @@ def recommend(request):
             cities_to = body['to']
             type_of_tour = body['type_of_tour']
             cost_range = body['cost_range']
+            contains_ticket = body['contains_ticket']
             hotel_filter_condition = body['hotel_filter_condition']
             tour_filter_condition = body['tour_filter_condition']
             #endregion
@@ -262,13 +264,14 @@ def recommend(request):
                 cities_from=cities_from, 
                 cities_to=cities_to, 
                 type_of_tour=type_of_tour, 
-                cost_range=cost_range, 
+                cost_range=cost_range,
+                contains_ticket=contains_ticket,
                 hotel_filter_condition=hotel_filter_condition,
                 tour_filter_condition=tour_filter_condition, 
                 ml_service=ml_service, 
                 time_travel_service=time_travel_service,
                 db=db)
-            result = result.assign_value(data=recommend_service.recommend_v2(), status_code=HTTPStatus.OK.value)
+            result = result.assign_value(data=recommend_service.recommend_v3(), status_code=HTTPStatus.OK.value)
         except Exception as e:
             result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
     else:
