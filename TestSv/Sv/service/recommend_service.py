@@ -604,7 +604,7 @@ class RecommendService:
     def to_travel_order(self, source, list_cord_of_source):
         if len(source) <= 1:
             return source
-        mstree = self.get_path_dijkstra(self.to_distance_matrix(list_cord_of_source))
+        mstree = self.get_minium_spanning_tree(self.to_distance_matrix(list_cord_of_source))
         temp = []
         for node in mstree:
             temp.append(source[node])
