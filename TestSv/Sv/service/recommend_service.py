@@ -184,7 +184,7 @@ class RecommendService:
             no_of_day = 1
             for j in range(0, len(self.cities_to)):
                 is_last_province = 1 if j == (len(self.cities_to) - 1) else 0
-                driving_time_between_province = list_travel_time_between_provinces[i] if not is_last_province else list_travel_time_between_provinces[i] + self.time_travel_service._calculate_driving_time(collection=collection_driving_time,
+                driving_time_between_province = list_travel_time_between_provinces[j] if not is_last_province else list_travel_time_between_provinces[j] + self.time_travel_service._calculate_driving_time(collection=collection_driving_time,
                                                                                                                                                                                                             city_from=self.cities_to[j],
                                                                                                                                                                                                             city_to=self.cities_from[0])
                 n_places = round(self.get_n_places(list_travel_time_by_each_province[j], driving_time_between_province, self.cost_range, len(self.cities_to), is_last_province)[0])
@@ -210,63 +210,6 @@ class RecommendService:
                     no_of_day += 1
                     pois_inday = list(set(pois_inday) - set(sub_pois))
             recommend_model.program.append(program_day)
-
-
-        # # build program tour
-        # for i in range(0, len(list_travel_time_by_each_vihicle)):
-        #     # get list travel time (like travel time from A to B (minutes), B to C,...)
-        #     list_travel_time_between_provinces = [] 
-        #     list_travel_time_between_provinces.append(list_travel_time_by_each_vihicle[i])
-        #     if len(self.cities_to) > 1:
-        #         for f in range(1, len(self.cities_to)):
-        #             city_a_cord = util.get_lat_lon([self.cities_to[f-1]])[0]
-        #             city_b_cord = util.get_lat_lon([self.cities_to[f]])[0]
-        #             dist = util.get_distance_between_two_cord(city_a_cord, city_b_cord)
-        #             driv_time = self.time_travel_service._calculate_driving_time(dist)
-        #             list_travel_time_between_provinces.append(driv_time) 
-            
-        #     program = []
-        #     for j in range(0, self.NUM_OF_HOTEL_FROM_RESPONSE):
-        #         program_day = []
-        #         no_of_day = 1
-        #         for k in range(0, len(self.cities_to)):
-        #             is_last_province = 1 if k == (len(self.cities_to) - 1) else 0
-        #             driving_time_between_province = list_travel_time_between_provinces[i] if not is_last_province else list_travel_time_between_provinces[k] + list_travel_time_by_each_vihicle[i]
-        #             # get num of places that we will visit in each province
-        #             n_places = round(self.get_n_places(list_travel_time_by_each_province[k], driving_time_between_province, self.cost_range, len(self.cities_to), is_last_province)[0]) 
-        #             # ex: 5
-        #             n_places_each_day = util.divide_equally(n_places, list_travel_time_by_each_province[k]) # num of places that we will visit each day in that province
-        #             # ex [3, 2]
-        #             hotel_inday = list_hotel_by_each_province[k][j]
-        #             pois_inday = list_pois_by_hotel[k][j]
-        #             # pois_inday = util.get_list_poi_by_cord(hotel_inday.get_cord())
-        #             for l in range(0, len(n_places_each_day)):
-        #                 tour_program = TourProgramModel()
-        #                 tour_program.no_of_day = no_of_day
-        #                 tour_program.province = self.cities_to[k]
-        #                 tour_program.hotel = hotel_inday
-        #                 tour_program.pois = []
-        #                 # region to travel order
-        #                 #   get random n points that near the hotel
-        #                 if len(pois_inday) > n_places_each_day[l]:
-        #                     sub_pois = sample(pois_inday, n_places_each_day[l])
-        #                 else:
-        #                     sub_pois = pois_inday.copy()
-        #                 #   to list coord
-        #                 list_sub_pois_coord = []
-        #                 for poi in sub_pois:
-        #                     list_sub_pois_coord.append(poi.get_cord())
-        #                 #   call to get travel order
-        #                 tour_program.pois = self.to_travel_order(sub_pois, list_sub_pois_coord)
-        #                 # travel_order = self.to_travel_order(sub_pois, list_sub_pois_coord)
-        #                 # for travel in travel_order:
-        #                 #     tour_program.pois.append(util.get_poi_detail(travel.xid))
-        #                 # endregion
-        #                 program_day.append(tour_program)
-        #                 no_of_day += 1
-        #                 pois_inday = list(set(pois_inday) - set(sub_pois))
-        #         program.append(program_day)
-        #     recommend_model.program.append(program)
 
         # predict places
         return recommend_model
@@ -591,6 +534,11 @@ class RecommendService:
         mstree = dijkstra(data)
         return breadth_first_order(mstree, i_start=0, directed=False, return_predecessors=False)
     
+    def get_path_tsp(self, data):
+        from python_tsp.exact import solve_tsp_dynamic_programming
+        permutaion, distance = solve_tsp_dynamic_programming(data)
+        return permutaion 
+    
     def to_distance_matrix(self, list_cord: list):
         province_distance_matrix = []
         for city in list_cord:
@@ -598,13 +546,13 @@ class RecommendService:
             for to_city in list_cord:
                 city_distance.append(util.get_distance_between_two_cord(city, to_city))
             province_distance_matrix.append(city_distance)
-        from scipy.sparse import csr_matrix
-        return csr_matrix(province_distance_matrix)
+        import numpy as np
+        return np.array(province_distance_matrix)
     
     def to_travel_order(self, source, list_cord_of_source):
-        if len(source) <= 1:
+        if len(source) <= 2:
             return source
-        mstree = self.get_minium_spanning_tree(self.to_distance_matrix(list_cord_of_source))
+        mstree = self.get_path_tsp(self.to_distance_matrix(list_cord_of_source))
         temp = []
         for node in mstree:
             temp.append(source[node])
