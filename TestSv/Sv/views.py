@@ -272,12 +272,16 @@ def recommend(request):
                 time_travel_service=time_travel_service,
                 db=db)
             result = result.assign_value(data=recommend_service.recommend_v3(), status_code=HTTPStatus.OK.value)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
+
         except Exception as e:
             result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+
     else:
         result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
+        return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
 
-    return JsonResponse(util.to_json(result))
 
 def predict_another_province(request):
     API_ENDPOINT = BASE_API_URL+'predict_another_province'
