@@ -28,9 +28,9 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 CONNECTION_STRING = os.getenv('CONNECTION_STRING')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
