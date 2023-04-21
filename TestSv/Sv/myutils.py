@@ -8,8 +8,6 @@ import pandas as pd
 import requests
 import urllib.parse
 
-import googlemaps
-import wikipediaapi
 from geopy import distance
 
 from selenium.webdriver.remote.webelement import WebElement
@@ -20,8 +18,6 @@ from .model.hotel_model import HotelModel
 from .model.interesting_places import InterestingPlace
 
 class util:
-
-    wiki = wikipediaapi.Wikipedia('vi')
 
     API_KEY = open('static/api_key.txt').read()
     API_KEY_OPENTRIPMAP = open('static/api_key_opentripmap.txt').read()
@@ -106,26 +102,26 @@ class util:
         return dataset
         #endregion
 
-    @staticmethod
-    def searchForLocation(address):
-        '''
-        Parameters:
-            address: String
-                - The address is a user input.
+    # @staticmethod
+    # def searchForLocation(address):
+    #     '''
+    #     Parameters:
+    #         address: String
+    #             - The address is a user input.
 
-        Returns:
-            location: Dictionary
-                - A dictionary returning the latitude, and longitude
-                of an address.
-        '''
+    #     Returns:
+    #         location: Dictionary
+    #             - A dictionary returning the latitude, and longitude
+    #             of an address.
+    #     '''
 
-        gmaps = googlemaps.Client(key=util.api_key)
-        #geocoding and address
-        geocodeResult = gmaps.geocode(address)
+    #     gmaps = googlemaps.Client(key=util.api_key)
+    #     #geocoding and address
+    #     geocodeResult = gmaps.geocode(address)
 
-        if geocodeResult:
-            location = geocodeResult[0]['geometry']['location']
-            return location
+    #     if geocodeResult:
+    #         location = geocodeResult[0]['geometry']['location']
+    #         return location
 
     @staticmethod
     def searchForLocation_v2(address):

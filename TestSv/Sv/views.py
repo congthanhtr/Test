@@ -13,9 +13,7 @@ from .model.result_object import ResultObject, ErrorResultObjectType
 from .myutils import util
 
 import pandas as pd
-import googlemaps
 import traceback, sys
-from googleplaces import GooglePlaces, types, lang, ranking
 
 # ML models
 # from .ml_model.decision_tree import model as dc_model
@@ -28,6 +26,8 @@ from googleplaces import GooglePlaces, types, lang, ranking
 # Create your views here.
 
 BASE_API_URL = 'api/v1/'
+db = util.get_db_handle(db_name='recommender')
+
 
 def index(request):
     API_ENDPOINT = BASE_API_URL+'index'
@@ -257,7 +257,8 @@ def recommend(request):
 
             time_travel_service = TimeTravelService()
             ml_service = MachineLearningService()
-            db = util.get_db_handle(db_name='recommender')
+            # db = util.get_db_handle(db_name='recommender')
+
             recommend_service = RecommendService(
                 num_of_day=num_of_day, 
                 num_of_night=num_of_night, 
