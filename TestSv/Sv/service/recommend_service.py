@@ -146,7 +146,6 @@ class RecommendService:
            ]
         ]
         '''
-        start = time.time()
         tour_filter = None
         if self.tour_filter_condition and len(self.tour_filter_condition) > 0:
             tour_filter = '|'.join(self.tour_filter_condition)
@@ -166,7 +165,6 @@ class RecommendService:
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=colelction_tour_filter)
                 list_pois_by_hotel_in_province.append(pois)
             list_pois_by_hotel.append(list_pois_by_hotel_in_province)
-        print(time.time()-start)
         
         list_travel_time_between_provinces = [total_travel_time]
         if len(self.cities_to) > 1:
