@@ -11,6 +11,7 @@ from ..model.recommend_model import RecommendModel, TourProgramModel
 from ..model.hotel_model import HotelModel
 from ..model.interesting_places import InterestingPlace
 
+
 class RecommendService:
     num_of_day: int = 0
     num_of_night: int = 0
@@ -29,7 +30,9 @@ class RecommendService:
 
     db: Database = None
 
-    NUM_OF_HOTEL_FROM_RESPONSE = 2
+    NUM_OF_HOTEL_FROM_RESPONSE = 4
+    LIMIT_HOTEL_RESULT = 50
+    LIMIT_POI_RESULT = 100
 
     def __init__(
         self,
@@ -51,14 +54,10 @@ class RecommendService:
 
         # transform city code to string
         self.code_cities_from = cities_from
-        self.cities_from = []
-        for cf in cities_from:
-            self.cities_from.append(util.get_province_name_by_code(cf))
-
+        self.cities_from = [util.get_province_name_by_code(cf) for cf in cities_from]
+        
         self.code_cities_to = cities_to
-        self.cities_to = []
-        for ct in cities_to:
-            self.cities_to.append(util.get_province_name_by_code(ct))
+        self.cities_to = [util.get_province_name_by_code(ct) for ct in cities_to]
 
         self.type_of_tour = type_of_tour
         self.cost_range = cost_range
@@ -88,7 +87,7 @@ class RecommendService:
         collection_poi = self.db.get_collection('vn_pois')
         collection_driving_time = self.db.get_collection('vn_provinces_driving_time')
         collection_hotel = self.db.get_collection('vn_hotels')
-        
+
         # calculate total travel time with predicted transport
         time_travel_service = self.time_travel_service.calculate_time_travel(self.cities_from, self.cities_to, collection=collection_driving_time)
         predict_transport_data = self.preprocess_data_for_predict_transport(time_travel_service)
@@ -96,7 +95,6 @@ class RecommendService:
         transport = predict_transport_model.model.predict(predict_transport_data)[0]
         recommend_model.main_transport = transport
         total_travel_time = self.get_total_travel_time(time_travel_service, transport)
-
         # get distance matrix from cities_from
         list_cities_to_cord = []
         for city in self.cities_to:
@@ -130,11 +128,10 @@ class RecommendService:
                 condition['kinds'] = {
                     '$regex': 'other_hotels'
                 }
-            collection_hotel_filter = collection_hotel.find(condition)
+            collection_hotel_filter = collection_hotel.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}])
             hotels = util.get_hotel_list_from_city_name_v2(collection_hotel_filter)
             hotels = sample(hotels, self.NUM_OF_HOTEL_FROM_RESPONSE) 
             list_hotel_by_each_province.append(hotels)
-        
         # get list pois by hotel
         list_pois_by_hotel: list[list[list[InterestingPlace]]] = []
         '''
@@ -149,6 +146,7 @@ class RecommendService:
            ]
         ]
         '''
+        start = time.time()
         tour_filter = None
         if self.tour_filter_condition and len(self.tour_filter_condition) > 0:
             tour_filter = '|'.join(self.tour_filter_condition)
@@ -164,21 +162,21 @@ class RecommendService:
                     condition['kinds'] = {
                         '$regex': tour_filter
                     }
-                colelction_tour_filter = collection_poi.find(condition)
+                colelction_tour_filter = collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}])
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=colelction_tour_filter)
                 list_pois_by_hotel_in_province.append(pois)
             list_pois_by_hotel.append(list_pois_by_hotel_in_province)
-
-        # build program tour again
+        print(time.time()-start)
+        
         list_travel_time_between_provinces = [total_travel_time]
         if len(self.cities_to) > 1:
             for f in range(1, len(self.cities_to)):
                 driv_time = self.time_travel_service._calculate_driving_time(collection=collection_driving_time,
-                                                                             city_from=self.cities_to[f-1],
-                                                                             city_to=self.cities_to[f])
+                                                                            city_from=self.cities_to[f-1],
+                                                                            city_to=self.cities_to[f])
                 list_travel_time_between_provinces.append(driv_time)
-        
-        # build tour program tour again
+
+        # build program tour again
         for i in range(0, self.NUM_OF_HOTEL_FROM_RESPONSE):
             program_day = []
             no_of_day = 1

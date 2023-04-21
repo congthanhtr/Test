@@ -19,7 +19,7 @@ class TimeTravelService:
         neareast_airport_from, cord_neareast_airport_from = util.get_neareast_airport(from_location)
         neareast_airport_to, cord_neareast_airport_to = util.get_neareast_airport(to_location)
 
-        self.distance = util.get_distance_between_two_cord(from_location, cord_neareast_airport_to)
+        self.distance = util.get_distance_between_two_cord(from_location[0], cord_neareast_airport_to)
         self.driving_time = self._calculate_driving_time(collection=collection, city_from=city_from[0], city_to=city_to[0])
         self.railway_time = self._calculate_railway_time()
 

@@ -1,4 +1,5 @@
-import pickle
+import joblib as pickle
+# import pickle
 
 
 class MachineLearningModel:

@@ -1,4 +1,4 @@
-# import pickle
+import pickle
 # import pandas as pd
 # from sklearn.preprocessing import LabelEncoder
 # from sklearn import tree
@@ -30,10 +30,10 @@
 
 from ..service.time_travel import TimeTravelService
 
-import pickle
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn import tree
+import joblib
 from pymongo import MongoClient
 
 client = MongoClient()
@@ -91,11 +91,11 @@ inputs['railway_time'] = railway_time
 inputs = inputs.drop(columns=['from', 'to', 'ref'])
 
 print(inputs)
-# model = tree.DecisionTreeClassifier()
-# model.fit(inputs.values, pred_Y.values)
+model = tree.DecisionTreeClassifier()
+model.fit(inputs.values, pred_Y.values)
 
-# with open("./Sv/ml_model/result/predict_transport.pkl", "wb") as f:
-#     pickle.dump(model, f)
+with open("./Sv/ml_model/result/predict_transport.pkl", "wb") as f:
+    joblib.dump(model, f)
 
 # pred_X = inputs.drop(['Distance(km)',"planeTime(m)",'busTime(m)','Days','Nights','TourType'],axis="columns")
 

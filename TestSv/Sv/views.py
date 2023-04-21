@@ -26,8 +26,8 @@ import traceback, sys
 # Create your views here.
 
 BASE_API_URL = 'api/v1/'
+start = time.time()
 db = util.get_db_handle(db_name='recommender')
-
 
 def index(request):
     API_ENDPOINT = BASE_API_URL+'index'

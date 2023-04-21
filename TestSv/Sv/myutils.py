@@ -1,4 +1,6 @@
 import json
+from math import pi, cos, asin, sqrt
+
 import pickle
 from random import sample
 import time
@@ -320,19 +322,19 @@ class util:
     
     @staticmethod
     def get_list_poi_by_cord_v3(cord: tuple, list_poi: list = None, filter_tour: list = None): # get list from by db
-        list_pois = []
-        for poi in list_poi:
-            ip = InterestingPlace(
-                vi_name=poi['name'],
-                xid=poi['xid'],
-                lat=poi['point']['lat'],
-                lng=poi['point']['lon'],
-                description=poi['description'],
-                preview=poi['preview']
-            )
-            distance = util.get_distance_between_two_cord(cord1=cord, cord2=ip.get_cord())
-            if distance < util.MAXIUM_DISTANCE_FROM_HOTEL_TO_POI:
-                list_pois.append(ip)
+        list_pois = [InterestingPlace(
+            vi_name=poi['name'],
+            xid=poi['xid'],
+            lat=poi['point']['lat'],
+            lng=poi['point']['lon'],
+            description=poi['description'],
+            preview=poi['preview']
+        ) for poi in list_poi if util.get_distance_between_two_cord(cord, InterestingPlace(vi_name=poi['name'],
+            xid=poi['xid'],
+            lat=poi['point']['lat'],
+            lng=poi['point']['lon'],
+            description=poi['description'],
+            preview=poi['preview']).get_cord()) < util.MAXIUM_DISTANCE_FROM_HOTEL_TO_POI]
         return list_pois
     
     @staticmethod
@@ -360,8 +362,11 @@ class util:
 
     @staticmethod
     def get_distance_between_two_cord(cord1: tuple, cord2: tuple):
-        return distance.distance(cord1, cord2).km
-    
+        # return distance.distance(cord1, cord2).km
+        p = pi/180
+        a = 0.5 - cos((cord2[0]-cord1[0])*p)/2 + cos(cord1[0]*p) * cos(cord2[0]*p) * (1-cos((cord2[1]-cord1[1])*p))/2
+        return 12742 * asin(sqrt(a)) #2*R*asin...
+        
     @staticmethod
     def preprocess_city_name(city: str, lower=False):
         import re
@@ -447,13 +452,7 @@ class util:
     
     @staticmethod
     def get_hotel_list_from_city_name_v2(list_hotels: list): # get hotel list from city in db
-        list_hotel = []
-        for hotel in list_hotels:
-            list_hotel.append(HotelModel(
-                name=hotel['name'],
-                lat=hotel['lat'],
-                lng=hotel['lng']
-            ))
+        list_hotel = [HotelModel(name=hotel['name'],lat=hotel['lat'],lng=hotel['lng']) for hotel in list_hotels]
         return list_hotel
         
     
