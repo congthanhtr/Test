@@ -38,6 +38,6 @@ class MachineLearningService:
 
     def get_predict_vihicles_model(self):
         return self.load_model(self.PREDICT_VIHICLES_PATH, 'predict_vihicles')
-    
+
     def get_predict_transport_model(self):
         return self.load_model(self.PREDICT_TRANSPORT_PATH, 'predict_transport')

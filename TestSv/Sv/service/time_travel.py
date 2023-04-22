@@ -1,3 +1,4 @@
+import time
 from ..myutils import util
 import pandas as pd
 
@@ -19,6 +20,7 @@ class TimeTravelService:
         neareast_airport_from, cord_neareast_airport_from = util.get_neareast_airport(from_location)
         neareast_airport_to, cord_neareast_airport_to = util.get_neareast_airport(to_location)
 
+        start = time.time()
         self.distance = util.get_distance_between_two_cord(from_location[0], cord_neareast_airport_to)
         self.driving_time = self._calculate_driving_time(collection=collection, city_from=city_from[0], city_to=city_to[0])
         self.railway_time = self._calculate_railway_time()
@@ -32,12 +34,12 @@ class TimeTravelService:
 
     def _calculate_driving_time(self, distance=None, collection=None, city_from=None, city_to=None) -> float:
         if collection is not None and city_from is not None and city_to is not None:
-            cl = collection.find({
+            start = time.time()
+            cl = list(collection.find({
                 'from': util.preprocess_city_name(city_from),
                 'to': util.preprocess_city_name(city_to)
-            })
-            for driving in cl:
-                return driving['driving_time']
+            }))[0]
+            return cl.get('driving_time')
         elif distance is not None:
             return (distance / self.DRIVING_SPEED) * 60.0
         return (self.distance / self.DRIVING_SPEED) * 60.0

@@ -128,7 +128,7 @@ class RecommendService:
                 condition['kinds'] = {
                     '$regex': 'other_hotels'
                 }
-            collection_hotel_filter = collection_hotel.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}])
+            collection_hotel_filter = list(collection_hotel.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}]))
             hotels = util.get_hotel_list_from_city_name_v2(collection_hotel_filter)
             hotels = sample(hotels, self.NUM_OF_HOTEL_FROM_RESPONSE) 
             list_hotel_by_each_province.append(hotels)
@@ -161,7 +161,7 @@ class RecommendService:
                     condition['kinds'] = {
                         '$regex': tour_filter
                     }
-                colelction_tour_filter = collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}])
+                colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=colelction_tour_filter)
                 list_pois_by_hotel_in_province.append(pois)
             list_pois_by_hotel.append(list_pois_by_hotel_in_province)
