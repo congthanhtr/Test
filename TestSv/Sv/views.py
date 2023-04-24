@@ -248,7 +248,6 @@ def recommend(request):
             num_of_night = body['num_of_night'] # số đêm
             cities_from = body['from']
             cities_to = body['to']
-            type_of_tour = body['type_of_tour']
             cost_range = body['cost_range']
             contains_ticket = body['contains_ticket']
             hotel_filter_condition = body['hotel_filter_condition']
@@ -264,7 +263,6 @@ def recommend(request):
                 num_of_night=num_of_night, 
                 cities_from=cities_from, 
                 cities_to=cities_to, 
-                type_of_tour=type_of_tour, 
                 cost_range=cost_range,
                 contains_ticket=contains_ticket,
                 hotel_filter_condition=hotel_filter_condition,

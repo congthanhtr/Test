@@ -40,7 +40,6 @@ class RecommendService:
         num_of_night: int,
         cities_from: list,
         cities_to: list,
-        type_of_tour: int,
         cost_range: float,
         contains_ticket: bool,
         db: Database,
@@ -59,7 +58,6 @@ class RecommendService:
         self.code_cities_to = cities_to
         self.cities_to = [util.get_province_name_by_code(ct) for ct in cities_to]
 
-        self.type_of_tour = type_of_tour
         self.cost_range = cost_range
         self.contains_ticket = contains_ticket
         self.hotel_filter_condition = hotel_filter_condition
