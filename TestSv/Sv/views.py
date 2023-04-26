@@ -280,6 +280,50 @@ def recommend(request):
     else:
         result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
         return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+    
+def recommend_v2(request):
+    API_ENDPOINT = BASE_API_URL+'recommend_v2'
+    result = ResultObject()
+    if request.method == 'POST':
+        try:
+            #region bodycontent
+            body = json.loads(request.body)
+            num_of_day = body['num_of_day'] # số ngày
+            num_of_night = body['num_of_night'] # số đêm
+            cities_from = body['from']
+            cities_to = body['to']
+            cost_range = body['cost_range']
+            contains_ticket = body['contains_ticket']
+            hotel_filter_condition = body['hotel_filter_condition']
+            tour_filter_condition = body['tour_filter_condition']
+            #endregion
+
+            time_travel_service = TimeTravelService()
+            ml_service = MachineLearningService()
+            # db = util.get_db_handle(db_name='recommender')
+
+            recommend_service = RecommendService(
+                num_of_day=num_of_day, 
+                num_of_night=num_of_night, 
+                cities_from=cities_from, 
+                cities_to=cities_to, 
+                cost_range=cost_range,
+                contains_ticket=contains_ticket,
+                hotel_filter_condition=hotel_filter_condition,
+                tour_filter_condition=tour_filter_condition, 
+                ml_service=ml_service, 
+                time_travel_service=time_travel_service,
+                db=db)
+            result = result.assign_value(data=recommend_service.recommend_v3(), status_code=HTTPStatus.OK.value)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
+
+        except Exception as e:
+            result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+
+    else:
+        result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
+        return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
 
 
 def predict_another_province(request):
