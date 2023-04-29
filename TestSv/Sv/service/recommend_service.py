@@ -112,9 +112,9 @@ class RecommendService:
         ]
         '''
         hotel_filter = None
-        if self.hotel_filter_condition and len(self.tour_filter_condition) > 0:
-            tour_filter = '|'.join(self.tour_filter_condition)
-            tour_filter = f'({tour_filter})'
+        if self.hotel_filter_condition and len(self.hotel_filter_condition) > 0:
+            hotel_filter = '|'.join(self.hotel_filter_condition)
+            hotel_filter = f'({hotel_filter})'
         for city in self.cities_to:
             condition = {}
             condition['province_name'] = util.preprocess_city_name(city=city)
@@ -123,9 +123,8 @@ class RecommendService:
                     '$regex': hotel_filter
                 }
             else:
-                condition['kinds'] = {
-                    '$regex': 'other_hotels'
-                }
+                condition['kinds'] = {'$regex': '(other_hotels)'}
+            print(condition)
             collection_hotel_filter = list(collection_hotel.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}]))
             hotels = util.get_hotel_list_from_city_name_v2(collection_hotel_filter)
             hotels = sample(hotels, self.NUM_OF_HOTEL_FROM_RESPONSE) 
@@ -159,7 +158,6 @@ class RecommendService:
                     condition['kinds'] = {
                         '$regex': tour_filter
                     }
-                print(condition)
                 colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=colelction_tour_filter)
                 list_pois_by_hotel_in_province.append(pois)

@@ -34,7 +34,6 @@ class TimeTravelService:
 
     def _calculate_driving_time(self, distance=None, collection=None, city_from=None, city_to=None) -> float:
         if collection is not None and city_from is not None and city_to is not None:
-            start = time.time()
             cl = list(collection.find({
                 'from': util.preprocess_city_name(city_from),
                 'to': util.preprocess_city_name(city_to)
