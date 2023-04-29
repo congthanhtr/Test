@@ -124,7 +124,6 @@ class RecommendService:
                 }
             else:
                 condition['kinds'] = {'$regex': '(other_hotels)'}
-            print(condition)
             collection_hotel_filter = list(collection_hotel.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}]))
             hotels = util.get_hotel_list_from_city_name_v2(collection_hotel_filter)
             hotels = sample(hotels, self.NUM_OF_HOTEL_FROM_RESPONSE) 
@@ -145,8 +144,7 @@ class RecommendService:
         '''
         tour_filter = None
         if self.tour_filter_condition and len(self.tour_filter_condition) > 0:
-            tour_filter = '|'.join(self.tour_filter_condition)
-            tour_filter = f'({tour_filter})'
+            tour_filter = self.get_tour_filter_condtion()
 
         for hotel_in_province in list_hotel_by_each_province:
             list_pois_by_hotel_in_province = []
@@ -157,6 +155,10 @@ class RecommendService:
                 if tour_filter:
                     condition['kinds'] = {
                         '$regex': tour_filter
+                    }
+                else:
+                    condition['kinds'] = {
+                        '$regex': '(interesting_places)'
                     }
                 colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=colelction_tour_filter)
@@ -577,3 +579,12 @@ class RecommendService:
             return time_travel_service.flight_time
         if util.is_equals(transport, 'tàu hỏa'):
             return time_travel_service.railway_time
+        
+    def get_tour_filter_condtion(self):
+        result = []
+        for filter in self.tour_filter_condition:
+            small_filter = filter.split(',')
+            small_result = '|'.join(small_filter)
+            result.append(small_result)
+        ret = '|'.join(result)
+        return f'({ret})'
