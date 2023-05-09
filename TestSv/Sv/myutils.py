@@ -323,13 +323,13 @@ class util:
     @staticmethod
     def get_list_poi_by_cord_v3(cord: tuple, list_poi: list = None, filter_tour: list = None): # get list from by db
         list_pois = [InterestingPlace(
-            vi_name=poi['name'],
+            vi_name=poi['vi_name'],
             xid=poi['xid'],
             lat=poi['point']['lat'],
             lng=poi['point']['lon'],
-            description=poi['description'],
+            description=poi['vi_description'] if 'vi_description' in poi else poi['description'],
             preview=poi['preview']
-        ) for poi in list_poi if util.get_distance_between_two_cord(cord, InterestingPlace(vi_name=poi['name'],
+        ) for poi in list_poi if util.get_distance_between_two_cord(cord, InterestingPlace(vi_name=poi['vi_name'],
             xid=poi['xid'],
             lat=poi['point']['lat'],
             lng=poi['point']['lon'],
