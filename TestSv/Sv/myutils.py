@@ -27,7 +27,11 @@ class util:
     NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE = 'not supported this http method'
     EXCEPTION_THROWN_AT_JSONRESPONSE = 'exception thrown at '
     EXCEPTION_MESSAGE_JSONRESPONSE = ''
-    MAXIUM_DISTANCE_FROM_HOTEL_TO_POI = 30
+    LOREM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis vitae eleifend arcu. Ut quis neque ante. Vestibulum ac condimentum tortor, quis mattis metus. Integer in urna et turpis elementum condimentum. Sed bibendum rhoncus fermentum. Nunc viverra dapibus massa, vitae consectetur mauris porttitor sed. Fusce sit amet lorem justo'
+    PREVIEW = {
+        'source': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4x1GejWnBjnBOw8PoiXpncEWqKJe0oLYX4g&usqp=CAU'
+    }
+    MAXIUM_DISTANCE_FROM_HOTEL_TO_POI = 50
 
     vietnam_city_geo = VietnamCityGeo().load_list()
     vietnam_city_bbox = VietnamCityBBox().load_list()
@@ -322,19 +326,37 @@ class util:
     
     @staticmethod
     def get_list_poi_by_cord_v3(cord: tuple, list_poi: list = None, filter_tour: list = None): # get list from by db
+        # list_pois = [InterestingPlace(
+        #     vi_name=poi['vi_name'],
+        #     xid=poi['xid'],
+        #     lat=poi['point']['lat'],
+        #     lng=poi['point']['lon'],
+        #     description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
+        #     preview=poi['preview']
+        # ) for poi in list_poi if util.get_distance_between_two_cord(cord, InterestingPlace(vi_name=poi['vi_name'],
+        #     xid=poi['xid'],
+        #     lat=poi['point']['lat'],
+        #     lng=poi['point']['lon'],
+        #     description=poi['description'],
+        #     preview=poi['preview']).get_cord()) < util.MAXIUM_DISTANCE_FROM_HOTEL_TO_POI]
+        
+        # for poi in list_poi:
+        #     a_poi = InterestingPlace(
+        #         vi_name=poi['vi_name'],
+        #         xid=poi['xid'],
+        #         lat=poi['point']['lat'],
+        #         lng=poi['point']['lng'],
+        #         description=poi['vi_description'],
+        #         preview=poi['preview']
+        #     )
         list_pois = [InterestingPlace(
             vi_name=poi['vi_name'],
             xid=poi['xid'],
             lat=poi['point']['lat'],
             lng=poi['point']['lon'],
-            description=poi['vi_description'] if 'vi_description' in poi else poi['description'],
-            preview=poi['preview']
-        ) for poi in list_poi if util.get_distance_between_two_cord(cord, InterestingPlace(vi_name=poi['vi_name'],
-            xid=poi['xid'],
-            lat=poi['point']['lat'],
-            lng=poi['point']['lon'],
-            description=poi['description'],
-            preview=poi['preview']).get_cord()) < util.MAXIUM_DISTANCE_FROM_HOTEL_TO_POI]
+            description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
+            preview=poi['preview'] if poi['preview'] is not None else util.PREVIEW
+        ) for poi in list_poi]
         return list_pois
     
     @staticmethod

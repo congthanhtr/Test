@@ -11,6 +11,7 @@ from ..model.recommend_model import RecommendModel, TourProgramModel
 from ..model.hotel_model import HotelModel
 from ..model.interesting_places import InterestingPlace
 
+accomodations = ['alpine_hut', 'apartments', 'campsites', 'guest_houses', 'hostels', 'other_hotels', 'love_hotels', 'motels', 'resorts', 'villas_and_chalet']
 
 class RecommendService:
     num_of_day: int = 0
@@ -86,6 +87,7 @@ class RecommendService:
         collection_driving_time = self.db.get_collection('vn_provinces_driving_time')
         collection_hotel = self.db.get_collection('vn_hotels')
 
+
         # calculate total travel time with predicted transport
         time_travel_service = self.time_travel_service.calculate_time_travel(self.cities_from, self.cities_to, collection=collection_driving_time)
         predict_transport_data = self.preprocess_data_for_predict_transport(time_travel_service)
@@ -114,7 +116,7 @@ class RecommendService:
         hotel_filter = None
         if self.hotel_filter_condition and len(self.hotel_filter_condition) > 0:
             hotel_filter = '|'.join(self.hotel_filter_condition)
-            hotel_filter = f'[{hotel_filter}]'
+            hotel_filter = f'({hotel_filter})'
         for city in self.cities_to:
             condition = {}
             condition['province_name'] = util.preprocess_city_name(city=city)
@@ -123,7 +125,7 @@ class RecommendService:
                     '$regex': hotel_filter
                 }
             else:
-                condition['kinds'] = {'$regex': '[other_hotels]'}
+                condition['kinds'] = {'$regex': '(other_hotels)'}
             collection_hotel_filter = list(collection_hotel.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}]))
             hotels = util.get_hotel_list_from_city_name_v2(collection_hotel_filter)
             hotels = sample(hotels, self.NUM_OF_HOTEL_FROM_RESPONSE) 
@@ -145,25 +147,28 @@ class RecommendService:
         tour_filter = None
         if self.tour_filter_condition and len(self.tour_filter_condition) > 0:
             tour_filter = self.get_tour_filter_condtion()
-
+        
         for hotel_in_province in list_hotel_by_each_province:
             list_pois_by_hotel_in_province = []
             cities_to_index = list_hotel_by_each_province.index(hotel_in_province)
+            condition = {}
+            condition['province_name'] = util.preprocess_city_name(self.cities_to[cities_to_index])
+            if tour_filter:
+                condition['kinds'] = {
+                    '$regex': tour_filter
+                }
+            else:
+                condition['kinds'] = {
+                    '$regex': '(interesting_places)'
+                }
+            print(condition)
             for hotel in hotel_in_province:
-                condition = {}
-                condition['province_name'] = util.preprocess_city_name(self.cities_to[cities_to_index])
-                if tour_filter:
-                    condition['kinds'] = {
-                        '$regex': tour_filter
-                    }
-                else:
-                    condition['kinds'] = {
-                        '$regex': '[interesting_places]'
-                    }
                 colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))
+                print(len(colelction_tour_filter))
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=colelction_tour_filter)
                 list_pois_by_hotel_in_province.append(pois)
             list_pois_by_hotel.append(list_pois_by_hotel_in_province)
+        print(len(list_pois_by_hotel[0][0]))
         
         list_travel_time_between_provinces = [total_travel_time]
         if len(self.cities_to) > 1:
@@ -175,6 +180,7 @@ class RecommendService:
 
         # build program tour again
         for i in range(0, self.NUM_OF_HOTEL_FROM_RESPONSE):
+            temp = list_pois_by_hotel.copy()
             program_day = []
             no_of_day = 1
             for j in range(0, len(self.cities_to)):
@@ -185,7 +191,7 @@ class RecommendService:
                 n_places = round(self.get_n_places(list_travel_time_by_each_province[j], driving_time_between_province, self.cost_range, len(self.cities_to), is_last_province)[0])
                 n_places_each_day = util.divide_equally(n_places, list_travel_time_by_each_province[j])
                 hotel_inday =list_hotel_by_each_province[j][i]
-                pois_inday = list_pois_by_hotel[j][i]
+                pois_inday = temp[j][i]
                 for k in range(0, len(n_places_each_day)):
                     tour_program = TourProgramModel()
                     tour_program.no_of_day = no_of_day
@@ -587,4 +593,4 @@ class RecommendService:
             small_result = '|'.join(small_filter)
             result.append(small_result)
         ret = '|'.join(result)
-        return f'[{ret}]'
+        return f'({ret})'

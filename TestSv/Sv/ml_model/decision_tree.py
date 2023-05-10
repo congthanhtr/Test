@@ -52,6 +52,7 @@ list_provinces_has_train = []
 for i in collection_provinces_has_train:
     list_provinces_has_train.append(i['admin_name'])
 
+
 df = pd.read_excel("static/predict_transport.xlsx")
 inputs = df.drop("transport", axis="columns")
 pred_Y = df['transport']
@@ -89,13 +90,15 @@ inputs['flight_time'] = flight_time
 inputs['railway_time'] = railway_time
 
 inputs = inputs.drop(columns=['from', 'to', 'ref'])
+inputs['transport'] = pred_Y
 
 print(inputs)
-model = tree.DecisionTreeClassifier()
-model.fit(inputs.values, pred_Y.values)
+# model = tree.DecisionTreeClassifier()
+# model.fit(inputs.values, pred_Y.values)
+# print(model.predict([[3,3.4,344,417,269,413]]))
 
-with open("./Sv/ml_model/result/predict_transport.pkl", "wb") as f:
-    joblib.dump(model, f)
+# with open("./Sv/ml_model/result/predict_transport.pkl", "wb") as f:
+    # joblib.dump(model, f)
 
 # pred_X = inputs.drop(['Distance(km)',"planeTime(m)",'busTime(m)','Days','Nights','TourType'],axis="columns")
 
