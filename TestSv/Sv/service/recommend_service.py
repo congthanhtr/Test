@@ -576,7 +576,7 @@ class RecommendService:
             railway_time = 0
 
         # (num_of_day  price  contains_ticket  distance  driving_time  flight_time  railway_time)
-        return pd.DataFrame([[self.num_of_day, self.cost_range, self.contains_ticket, distance, driving_time, flight_time, railway_time]])
+        return pd.DataFrame([[self.num_of_day, self.cost_range, distance, driving_time, flight_time, railway_time]])
     
     def get_total_travel_time(self, time_travel_service, transport):
         if util.is_equals(transport, 'ô tô'):
