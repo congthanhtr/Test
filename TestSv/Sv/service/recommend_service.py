@@ -190,7 +190,9 @@ class RecommendService:
                                                                                                                                                                                                             city_to=self.cities_from[0])
                 n_places = round(self.get_n_places(list_travel_time_by_each_province[j], driving_time_between_province, self.cost_range, len(self.cities_to), is_last_province)[0])
                 n_places_each_day = util.divide_equally(n_places, list_travel_time_by_each_province[j])
-                hotel_inday =list_hotel_by_each_province[j][i]
+                if n_places > len(list_pois_by_hotel[j][i]):
+                    n_places_each_day = util.divide_equally(len(list_pois_by_hotel[j][i]), list_travel_time_by_each_province[j])
+                hotel_inday = list_hotel_by_each_province[j][i]
                 pois_inday = temp[j][i]
                 for k in range(0, len(n_places_each_day)):
                     tour_program = TourProgramModel()

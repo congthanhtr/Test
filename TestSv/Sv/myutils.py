@@ -340,15 +340,20 @@ class util:
         #     description=poi['description'],
         #     preview=poi['preview']).get_cord()) < util.MAXIUM_DISTANCE_FROM_HOTEL_TO_POI]
         
+        # list_pois = []
         # for poi in list_poi:
         #     a_poi = InterestingPlace(
         #         vi_name=poi['vi_name'],
         #         xid=poi['xid'],
         #         lat=poi['point']['lat'],
-        #         lng=poi['point']['lng'],
-        #         description=poi['vi_description'],
-        #         preview=poi['preview']
+        #         lng=poi['point']['lon'],
+        #         description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
+        #         preview=poi['preview'] if poi['preview'] is not None else util.PREVIEW
         #     )
+        #     if util.get_distance_between_two_cord(cord, a_poi.get_cord()) < util.MAXIUM_DISTANCE_FROM_HOTEL_TO_POI:
+        #         list_pois.append(a_poi)
+        # return list_pois
+
         list_pois = [InterestingPlace(
             vi_name=poi['vi_name'],
             xid=poi['xid'],
@@ -437,6 +442,20 @@ class util:
                 neareast_cord = c
         return (neareast_airport, neareast_cord)
     
+    @staticmethod
+    def get_neareast_airport_v2(cord: list):
+        list_airport = util.vietnam_airport.load_list_airport()
+        neareast_airport = list_airport[0]
+        neareast_cord = neareast_airport.get_cord()
+        min_dis = util.get_distance_between_two_cord(cord[0],neareast_airport.get_cord())
+        for airport in list_airport:
+            dist = util.get_distance_between_two_cord(cord[0], airport.get_cord())
+            if dist < min_dis:
+                min_dis = dist
+                neareast_airport = airport
+                neareast_cord = airport.get_cord()
+        return (neareast_airport, neareast_cord)
+
     @staticmethod
     def get_province_name_by_code(code: str):
         from vietnam_provinces.enums import ProvinceEnum

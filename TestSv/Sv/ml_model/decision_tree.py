@@ -90,12 +90,12 @@ inputs['flight_time'] = flight_time
 inputs['railway_time'] = railway_time
 
 inputs = inputs.drop(columns=['from', 'to', 'ref'])
-inputs['transport'] = pred_Y
+# inputs['transport'] = pred_Y
 
 print(inputs)
-# model = tree.DecisionTreeClassifier()
-# model.fit(inputs.values, pred_Y.values)
-# print(model.predict([[3,3.4,344,417,269,413]]))
+model = tree.DecisionTreeClassifier()
+model.fit(inputs.values, pred_Y.values)
+# print(model.predict([[3,3.4,344,417,86,413]]))
 
 # with open("./Sv/ml_model/result/predict_transport.pkl", "wb") as f:
     # joblib.dump(model, f)
