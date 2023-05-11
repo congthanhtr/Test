@@ -149,7 +149,7 @@ class RecommendService:
             tour_filter = self.get_tour_filter_condtion()
         
         for hotel_in_province in list_hotel_by_each_province:
-            xid_set = set()
+            # xid_set = set()
             list_pois_by_hotel_in_province = []
             cities_to_index = list_hotel_by_each_province.index(hotel_in_province)
             condition = {}
@@ -166,7 +166,7 @@ class RecommendService:
             for hotel in hotel_in_province:
                 colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=colelction_tour_filter)
-                pois = [poi for poi in pois if util.can_add_set(xid_set, poi.xid)]
+                # pois = [poi for poi in pois if util.can_add_set(xid_set, poi.xid)]
                 list_pois_by_hotel_in_province.append(pois)
             list_pois_by_hotel.append(list_pois_by_hotel_in_province)
         # print(len(list_pois_by_hotel[0][0]))
