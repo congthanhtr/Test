@@ -417,6 +417,14 @@ class util:
             for c in city:
                     list_city_geo.append(util.searchForLocation_v2(city))
         return list_city_geo
+    
+    @staticmethod
+    def can_add_set(s: set, element):
+        origin_len = len(s)
+        s.add(element)
+        if len(s) == origin_len:
+            return False
+        return True
 
     @staticmethod
     def get_neareast_airport(cord: list):
