@@ -2,6 +2,8 @@ from random import sample
 import time
 from .ml_service import MachineLearningService
 from .time_travel import TimeTravelService
+from .cosine_similarity_service import CosineSimilarityService
+
 from ..myutils import util
 
 from pymongo.database import Database
@@ -86,6 +88,7 @@ class RecommendService:
         collection_poi = self.db.get_collection('vn_pois')
         collection_driving_time = self.db.get_collection('vn_provinces_driving_time')
         collection_hotel = self.db.get_collection('vn_hotels')
+        collection_tour_created = self.db.get_collection('log_tour_created')
 
 
         # calculate total travel time with predicted transport
@@ -117,6 +120,9 @@ class RecommendService:
         if self.hotel_filter_condition and len(self.hotel_filter_condition) > 0:
             hotel_filter = '|'.join(self.hotel_filter_condition)
             hotel_filter = f'({hotel_filter})'
+        else:
+            hotel_filter = '(other_hotels)'
+        # self.hotel_filter_condition = hotel_filter
         for city in self.cities_to:
             condition = {}
             condition['province_name'] = util.preprocess_city_name(city=city)
@@ -163,6 +169,7 @@ class RecommendService:
                     '$regex': '(interesting_places)'
                 }
             # print(condition)
+            # self.tour_filter_condition = tour_filter
             for hotel in hotel_in_province:
                 colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=colelction_tour_filter)
@@ -178,11 +185,59 @@ class RecommendService:
                                                                             city_from=self.cities_to[f-1],
                                                                             city_to=self.cities_to[f])
                 list_travel_time_between_provinces.append(driv_time)
+        
+        # need a step before build program tour
+        vector_similarity = self.get_vector_similarity()
+        tour_created = list(collection_tour_created.find(
+            {"from": {"$in": self.code_cities_from}, "to": {"$in": self.code_cities_to}, "num_of_day": self.num_of_day},
+            )
+        )
+        sim_recommend_from_tour_created = []
+        if len(tour_created) > 0:
+            for tc in tour_created:
+                vector_created = list(tc.values())
+                tour_created_id = vector_created.pop(0)
+                vector_created.pop(-1)
+                vector_created[5] = self.seperate_tour_filter_condtion(vector_created[5])
+                vector_created[6] = self.seperate_tour_filter_condtion(vector_created[6])
+                sim = CosineSimilarityService.calculate(vector_similarity, vector_created)
+                if sim is not None:
+                    sim_recommend_from_tour_created.append((tour_created_id, sim))
+            sim_recommend_from_tour_created = sorted(sim_recommend_from_tour_created, key=lambda x: x[1], reverse=True)
+
+        print(sim_recommend_from_tour_created)
+
+        if len(sim_recommend_from_tour_created) > 0:
+            for tour_sim_tuple in sim_recommend_from_tour_created[:1]:
+                recommend_from_tour_created = []
+                tour = collection_tour_created.find_one({'_id': tour_sim_tuple[0]})
+                program = tour['pois']
+                no_of_day = 1
+                for day in program:
+                    tour_program = TourProgramModel()
+                    tour_program.no_of_day = no_of_day
+                    tour_program.province = util.get_province_name_by_code(list(day[0].keys())[0])
+                    tour_program.pois = []
+                    for poi in day:
+                        xid = list(poi.values())[0]
+                        poi_with_xid = collection_poi.find_one({'xid': xid})
+                        interesting_place = InterestingPlace(
+                            xid=poi_with_xid['xid'],
+                            vi_name=poi_with_xid['vi_name'],
+                            description=poi_with_xid['vi_description'] if 'vi_description' in poi_with_xid else util.LOREM,
+                            lat=poi_with_xid['point']['lat'],
+                            lng=poi_with_xid['point']['lon'],
+                            preview=poi_with_xid['preview']
+                        )
+                        tour_program.pois.append(interesting_place)
+                    recommend_from_tour_created.append(tour_program)
+                    no_of_day += 1
+                recommend_model.program.append(recommend_from_tour_created)
 
         # build program tour again
         for i in range(0, self.NUM_OF_HOTEL_FROM_RESPONSE):
-            temp = list_pois_by_hotel.copy()
             program_day = []
+            temp = list_pois_by_hotel.copy()
             no_of_day = 1
             for j in range(0, len(self.cities_to)):
                 is_last_province = 1 if j == (len(self.cities_to) - 1) else 0
@@ -589,11 +644,31 @@ class RecommendService:
         if util.is_equals(transport, 'tàu hỏa'):
             return time_travel_service.railway_time
         
-    def get_tour_filter_condtion(self):
+    def get_tour_filter_condtion(self, tour_filter_condition = None):
         result = []
-        for filter in self.tour_filter_condition:
+        if tour_filter_condition is None:
+            tour_filter_condition = self.tour_filter_condition
+        for filter in tour_filter_condition:
             small_filter = filter.split(',')
             small_result = '|'.join(small_filter)
             result.append(small_result)
         ret = '|'.join(result)
         return f'({ret})'
+    
+    def seperate_tour_filter_condtion(self, tour_filter_condition = None):
+        result  = []
+        if tour_filter_condition is None:
+            tour_filter_condition = self.tour_filter_condition
+        for filter in tour_filter_condition:
+            small_filter = filter.split(',')
+            result.extend(small_filter) 
+        return result
+    
+    def get_vector_similarity(self):
+        return [self.num_of_day, 
+                self.num_of_night, 
+                self.code_cities_from, 
+                self.code_cities_to, 
+                self.cost_range, 
+                self.seperate_tour_filter_condtion(self.hotel_filter_condition), 
+                self.seperate_tour_filter_condtion(self.tour_filter_condition)]
