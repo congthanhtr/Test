@@ -216,6 +216,11 @@ class RecommendService:
                 for day in program:
                     tour_program = TourProgramModel()
                     tour_program.no_of_day = no_of_day
+                    tour_program.hotels = HotelModel(
+                        name='hotel',
+                        lat=1,
+                        lng=1
+                    )
                     tour_program.province = util.get_province_name_by_code(list(day[0].keys())[0])
                     tour_program.pois = []
                     for poi in day:
