@@ -37,7 +37,7 @@ class util:
     vietnam_city_bbox = VietnamCityBBox().load_list()
     vietnam_airport = VietnamAirport().load_list()
 
-    NOMINATIM_API = 'https://nominatim.openstreetmap.org/search/{}?format=json&addressdetails=1&countrycodes=vn'
+    NOMINATIM_API = 'https://nominatim.openstreetmap.org/search/{}?format=json&addressdetails=1&countrycodes=vn&limit=1'
     NOMINATIM_CHECK_API = 'https://nominatim.openstreetmap.org/status.php?format=json'
     NOMINATIM_DETAIL_API = 'https://nominatim.openstreetmap.org/details.php?osmtype={}&osmid={}&format=json'
 

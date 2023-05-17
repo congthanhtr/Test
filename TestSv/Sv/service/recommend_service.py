@@ -39,13 +39,13 @@ class RecommendService:
 
     def __init__(
         self,
-        num_of_day: int,
-        num_of_night: int,
-        cities_from: list,
-        cities_to: list,
-        cost_range: float,
-        contains_ticket: bool,
-        db: Database,
+        num_of_day: int = None,
+        num_of_night: int = None,
+        cities_from: list = None,
+        cities_to: list = None,
+        cost_range: float = None,
+        contains_ticket: bool = None,
+        db: Database = None,
         hotel_filter_condition = None,
         tour_filter_condition = None,
         ml_service = None,
@@ -56,10 +56,16 @@ class RecommendService:
 
         # transform city code to string
         self.code_cities_from = cities_from
-        self.cities_from = [util.get_province_name_by_code(cf) for cf in cities_from]
+        if cities_from is not None:
+            self.cities_from = [util.get_province_name_by_code(cf) for cf in cities_from]
+        else:
+            self.cities_from = None
         
         self.code_cities_to = cities_to
-        self.cities_to = [util.get_province_name_by_code(ct) for ct in cities_to]
+        if cities_to is not None:
+            self.cities_to = [util.get_province_name_by_code(ct) for ct in cities_to]
+        else:
+            self.cities_to = None
 
         self.cost_range = cost_range
         self.contains_ticket = contains_ticket
@@ -205,10 +211,9 @@ class RecommendService:
                     sim_recommend_from_tour_created.append((tour_created_id, sim))
             sim_recommend_from_tour_created = sorted(sim_recommend_from_tour_created, key=lambda x: x[1], reverse=True)
 
-        print(sim_recommend_from_tour_created)
-
         if len(sim_recommend_from_tour_created) > 0:
-            for tour_sim_tuple in sim_recommend_from_tour_created[:1]:
+            sim_recommend_from_tour_created = sim_recommend_from_tour_created[:2] if len(sim_recommend_from_tour_created) > 2 else sim_recommend_from_tour_created
+            for tour_sim_tuple in sim_recommend_from_tour_created:
                 recommend_from_tour_created = []
                 tour = collection_tour_created.find_one({'_id': tour_sim_tuple[0]})
                 program = tour['pois']
@@ -217,7 +222,7 @@ class RecommendService:
                     tour_program = TourProgramModel()
                     tour_program.no_of_day = no_of_day
                     tour_program.hotel = HotelModel(
-                        name='hotel',
+                        name='',
                         lat=1,
                         lng=1
                     )
@@ -558,6 +563,21 @@ class RecommendService:
 
         return recommend_model
 
+    def poi_recommend(self):
+        collection_poi = self.db.get_collection('vn_pois')
+
+        full_destination_name = util.get_province_name_by_code(self.code_cities_to[0])
+
+
+        preprocess_destination_name = util.preprocess_city_name(full_destination_name)
+
+        tour_filter = self.get_tour_filter_condtion()
+
+        docs = list(collection_poi.find({'province_name': preprocess_destination_name, 'kinds': {'$regex': tour_filter}}, {'_id': 0}))
+        data = util.get_list_poi_by_cord_v3(cord=None, list_poi=docs)
+
+        return data
+    
     def should_travel_by_plane(self, cities_from, cities_to) -> tuple:
         predict_vihicles = self.ml_service.get_predict_vihicles_model()
         time_travel_model = self.time_travel_service.calculate_time_travel(

@@ -25,8 +25,7 @@ import traceback, sys
 
 # Create your views here.
 
-BASE_API_URL = 'api/v1/'
-start = time.time()
+BASE_API_URL = 'api/'
 db = util.get_db_handle(db_name='recommender')
 
 def index(request):
@@ -282,7 +281,7 @@ def recommend(request):
         return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
     
 def recommend_v2(request):
-    API_ENDPOINT = BASE_API_URL+'recommend_v2'
+    API_ENDPOINT = BASE_API_URL+'v2/recommend'
     result = ResultObject()
     if request.method == 'POST':
         try:
@@ -293,7 +292,6 @@ def recommend_v2(request):
             cities_from = body['from']
             cities_to = body['to']
             cost_range = body['cost_range']
-            contains_ticket = body['contains_ticket']
             hotel_filter_condition = body['hotel_filter_condition']
             tour_filter_condition = body['tour_filter_condition']
             #endregion
@@ -308,7 +306,6 @@ def recommend_v2(request):
                 cities_from=cities_from, 
                 cities_to=cities_to, 
                 cost_range=cost_range,
-                contains_ticket=contains_ticket,
                 hotel_filter_condition=hotel_filter_condition,
                 tour_filter_condition=tour_filter_condition, 
                 ml_service=ml_service, 
@@ -323,70 +320,188 @@ def recommend_v2(request):
 
     else:
         result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
-        return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
-
-
-def predict_another_province(request):
-    API_ENDPOINT = BASE_API_URL+'predict_another_province'
-    result = ResultObject()
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body) # Data is an array
-
-            # Load the data into a pandas DataFrame
-            df = pd.DataFrame([data['data']])
-
-            y_pred = lgr_model.predict(df.values)
-   
-
-            # Convert the predicted labels to a list
-            predictions = y_pred.tolist()[0]
-
-            # Create a dictionary with the predicted labels
-            resData = result.assign_value(predictions, 200)
-
-        except Exception as e:
-            result.data = util.get_exception(API_ENDPOINT, str(traceback.format_exc()))
-            result.status_code = HTTPStatus.BAD_REQUEST.value  
-    # Return the result as a JSON response
-    return JsonResponse(util.to_json(resData))
-
-def submit_cities_to(request):
-    API_ENDPOINT = BASE_API_URL + 'submit_cities_to'
+        return JsonResponse(util.to_json(result), status=HTTPStatus.METHOD_NOT_ALLOWED)
+    
+def poi_recommend(request):
+    API_ENDPOINT = BASE_API_URL+'v2/poi/recommend'
     result = ResultObject()
     if request.method == 'POST':
         try:
-            # region get request body content
+            #region bodycontent
             body = json.loads(request.body)
-            data = body['data']
-            user_input = body['input']
-            # endregion
-            recommend_service = RecommendService(user_input=user_input)
-            result.data = recommend_service.submit_cities_to(data)
-            result.status_code = HTTPStatus.OK.value 
+            cities_to = body['to']
+            tour_filter_condition = body['tour_filter_condition']
+            #endregion
+
+            recommend_service = RecommendService(
+                cities_to=cities_to, 
+                tour_filter_condition=tour_filter_condition, 
+                db=db)
+            result = result.assign_value(data=recommend_service.poi_recommend(), status_code=HTTPStatus.OK.value)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
+
         except Exception as e:
             result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+
     else:
         result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
-
-    return JsonResponse(util.to_json(result))
-
-def get_hotel_and_list_poi(request):
-    API_ENDPOINT = BASE_API_URL + 'get_hotel_and_list_poi'
+        return JsonResponse(util.to_json(result), status=HTTPStatus.METHOD_NOT_ALLOWED)
+    
+def poi_find(request):
+    import requests
+    API_ENDPOINT = BASE_API_URL+'v2/poi/find'
     result = ResultObject()
     if request.method == 'POST':
         try:
-            # region get request body content
+            #region bodycontent
             body = json.loads(request.body)
-            data = body['data']
-            user_input = body['input']
-            # endregion
-            recommend_service = RecommendService(user_input=user_input)
-            result.data = recommend_service.get_hotel_and_list_poi(data)
-            result.status_code = HTTPStatus.OK.value 
+            address = body['address']
+            #endregion
+            data = dict()
+            req = requests.get(util.NOMINATIM_API.format(address)).json()[0]
+            data['vi_name'] = req['display_name']
+            data['point'] = dict()
+            data['point']['lat'] = req['lat']
+            data['point']['lon'] = req['lon']
+            osm_type = req['osm_type']
+            if util.is_equals(osm_type, 'way'):
+                data['xid'] = 'W'+str(req['osm_id'])
+            elif util.is_equals(osm_type, 'node'):
+                data['xid'] = 'N'+str(req['osm_id'])
+            elif util.is_equals(osm_type,'relation'):
+                data['xid'] = 'R'+str(req['osm_id'])
+            data['kinds'] = ''
+            data['preview'] = ''
+            data['description'] = ''
+
+            result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
+
         except Exception as e:
             result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+
     else:
         result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
+        return JsonResponse(util.to_json(result), status=HTTPStatus.METHOD_NOT_ALLOWED)
+    
+def poi_find_by_xid(request, xid):
+    API_ENDPOINT = BASE_API_URL+'v2/poi/poi_find_by_xid'
+    result = ResultObject()
+    if request.method == 'GET':
+        try:
+            collection_poi = db.get_collection('vn_pois')
+            data = list(collection_poi.find({'xid':xid}, {'_id':0}))
+            result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
+        except Exception as e:
+            result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+    else:
+        result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
+        return JsonResponse(util.to_json(result), status=HTTPStatus.METHOD_NOT_ALLOWED)
 
-    return JsonResponse(util.to_json(result))
+def poi_delete_by_xid(request, xid):
+    API_ENDPOINT = BASE_API_URL+'v2/poi/poi_delete_by_xid'
+    result = ResultObject()
+    if request.method == 'DELETE':
+        try:
+            collection_poi = db.get_collection('vn_pois')
+            data = collection_poi.delete_many({'xid':xid})
+            result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
+        except Exception as e:
+            result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+    else:
+        result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
+        return JsonResponse(util.to_json(result), status=HTTPStatus.METHOD_NOT_ALLOWED)
+    
+def poi_add_and_update(request):
+    API_ENDPOINT = BASE_API_URL+'v2/poi_api'
+    result = ResultObject()
+    if request.method == 'POST': # add
+        API_ENDPOINT+='/add'
+        try:
+            #region bodycontent
+            body = json.loads(request.body)
+            xid = body['xid']
+            province_id = body['province_id']
+            vi_name = body['vi_name']
+            kinds = body['kinds']
+            lat = body['lat']
+            lon = body['lon']
+            preview = body['preview']
+            description = body['description']
+            #endregion
+            collection_poi = db.get_collection('vn_pois')
+            data = {}
+            data['xid'] = xid
+            data['province_name'] = util.get_province_name_by_code(province_id) if not util.is_null_or_empty(province_id) else None
+            data['vi_name'] = vi_name
+            data['name'] = vi_name
+            data['kinds'] = kinds
+            data['point'] = dict()
+            data['point']['lat'] = lat
+            data['point']['lon'] = lon
+            data['vi_description'] = description
+            data['description'] = description
+            data['preview'] = dict()
+            data['preview']['source'] = preview
+            
+            collection_poi.insert_one(data)
+            data.pop('_id')
+
+            result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
+
+        except Exception as e:
+            result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+    elif request.method == 'PUT':
+        API_ENDPOINT+='/update'
+        try:
+            #region bodycontent
+            body = json.loads(request.body)
+            xid = body['xid']
+            province_id = body['province_id']
+            name = body['vi_name']
+            kinds = body['kinds']
+            lat = body['lat']
+            lon = body['lon']
+            preview = body['preview']
+            description = body['description']
+            #endregion
+            data = {}
+            if not util.is_null_or_empty(xid):
+                collection_poi = db.get_collection('vn_pois')
+                if len(list(collection_poi.find({'xid': xid}))) == 0:
+                    raise ValueError('No xid found')
+                data['province_name'] = util.get_province_name_by_code(province_id) if not util.is_null_or_empty(province_id) else None
+                data['vi_name'] = name
+                data['name'] = name
+                data['kinds'] = kinds
+                data['point'] = dict()
+                data['point']['lat'] = lat
+                data['point']['lon'] = lon
+                data['vi_description'] = description
+                data['description'] = description
+                data['preview'] = dict()
+                data['preview']['source'] = preview
+                collection_poi.update_many({'xid': xid}, {'$set': data})
+                result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
+                return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
+            else:
+                data['msg'] = 'xid cannot be empty or not found'
+                result = result.assign_value(data=data, status_code=HTTPStatus.BAD_REQUEST.value)
+                return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+        
+        except Exception as e:
+            result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+
+    else:
+        result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
+        return JsonResponse(util.to_json(result), status=HTTPStatus.METHOD_NOT_ALLOWED)
+    

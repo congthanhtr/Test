@@ -1,0 +1,265 @@
+{
+	"info": {
+		"_postman_id": "7d2244ab-4b11-4d13-b23a-3d191802c0b1",
+		"name": "api collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "recommend_v2",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"num_of_day\": 3,\r\n    \"num_of_night\": 2,\r\n    \"from\": [\r\n        \"1\"\r\n    ],\r\n    \"to\": [\r\n        \"79\"\r\n    ],\r\n    \"cost_range\": 6,\r\n    \"contains_ticket\": false,\r\n    \"hotel_filter_condition\": [],\r\n    \"tour_filter_condition\": [\r\n        \"buddhist_temples,churches,mausoleum,palaces,art_galleries,military_museums,opera_houses,mausoleums,other_fortifications    \", \"water_parks\"\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/v2/recommend",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v2",
+						"recommend"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "recommend_on_cloud",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"num_of_day\": 2,\r\n    \"num_of_night\": 1,\r\n    \"from\": [\"27\"],\r\n    \"to\": [\"1\", \"20\"],\r\n    \"type_of_tour\": 0,\r\n    \"cost_range\": 3.1,\r\n    \"contains_ticket\": false,\r\n    \"hotel_filter_condition\": [],\r\n    \"tour_filter_condition\": [\"religion\", \"interesting_places\"]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://34.86.158.252/api/v1/recommend",
+					"protocol": "http",
+					"host": [
+						"34",
+						"86",
+						"158",
+						"252"
+					],
+					"path": [
+						"api",
+						"v1",
+						"recommend"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "poi_api_recommend_for_manual_tour_creating",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"to\": [\"1\"],\r\n    \"tour_filter_condition\": [\"buddhist_temples,churches,mausoleum,palaces,art_galleries\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/v2/poi/recommend",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v2",
+						"poi",
+						"recommend"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "poi_api_find_places_by_address",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"address\": \"Khu Công nghiệp yên Phong Bắc Ninh\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/v2/poi/find",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v2",
+						"poi",
+						"find"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "poi_api_find_by_xid",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/v2/poi/find/Q5122391",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v2",
+						"poi",
+						"find",
+						"Q5122391"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "poi_api_add",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"xid\": \"\",\r\n    \"province_id\": \"\",\r\n    \"vi_name\": \"\",\r\n    \"kinds\": \"\",\r\n    \"lat\": 0.0,\r\n    \"lon\": 0.0,\r\n    \"preview\": \"\",\r\n    \"description\": \"\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/v2/poi",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v2",
+						"poi"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "poi_api_update",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"xid\": \"\",\r\n    \"province_id\": \"\",\r\n    \"vi_name\": \"\",\r\n    \"kinds\": \"\",\r\n    \"lat\": 0.0,\r\n    \"lon\": 0.0,\r\n    \"preview\": \"\",\r\n    \"description\": \"\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/v2/poi",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v2",
+						"poi"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "poi_api_delete_by_xid",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/v2/poi/delete/1",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v2",
+						"poi",
+						"delete",
+						"1"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
