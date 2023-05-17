@@ -216,7 +216,7 @@ class RecommendService:
                 for day in program:
                     tour_program = TourProgramModel()
                     tour_program.no_of_day = no_of_day
-                    tour_program.hotels = HotelModel(
+                    tour_program.hotel = HotelModel(
                         name='hotel',
                         lat=1,
                         lng=1
