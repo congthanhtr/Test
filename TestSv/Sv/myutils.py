@@ -470,6 +470,15 @@ class util:
         return ProvinceEnum[f'P_{code}'].value.name
     
     @staticmethod
+    def get_province_code_by_name(name: str):
+        from vietnam_provinces.enums import ProvinceEnum
+        for i in range(1, 100):
+            if f'P_{i}' in ProvinceEnum.__members__:
+                if name in ProvinceEnum[f'P_{i}'].value.name:
+                    return ProvinceEnum[f'P_{i}'].value.code
+        return None
+    
+    @staticmethod
     def divide_equally(num: int, div: int):
         integer = num // div
         remainder = num % div
