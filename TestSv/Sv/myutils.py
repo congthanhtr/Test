@@ -325,7 +325,7 @@ class util:
         return list_poi
     
     @staticmethod
-    def get_list_poi_by_cord_v3(cord: tuple, list_poi: list = None, filter_tour: list = None): # get list from by db
+    def get_list_poi_by_cord_v3(cord: tuple, list_poi: list = None): # get list from by db
         # list_pois = [InterestingPlace(
         #     vi_name=poi['vi_name'],
         #     xid=poi['xid'],
@@ -340,29 +340,32 @@ class util:
         #     description=poi['description'],
         #     preview=poi['preview']).get_cord()) < util.MAXIUM_DISTANCE_FROM_HOTEL_TO_POI]
         
-        # list_pois = []
-        # for poi in list_poi:
-        #     a_poi = InterestingPlace(
-        #         vi_name=poi['vi_name'],
-        #         xid=poi['xid'],
-        #         lat=poi['point']['lat'],
-        #         lng=poi['point']['lon'],
-        #         description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
-        #         preview=poi['preview'] if poi['preview'] is not None else util.PREVIEW
-        #     )
-        #     if util.get_distance_between_two_cord(cord, a_poi.get_cord()) < util.MAXIUM_DISTANCE_FROM_HOTEL_TO_POI:
-        #         list_pois.append(a_poi)
-        # return list_pois
-
-        list_pois = [InterestingPlace(
-            vi_name=poi['vi_name'],
-            xid=poi['xid'],
-            lat=poi['point']['lat'],
-            lng=poi['point']['lon'],
-            description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
-            preview=poi['preview'] if poi['preview'] is not None else util.PREVIEW
-        ) for poi in list_poi]
+        list_pois = []
+        for poi in list_poi:
+            a_poi = InterestingPlace(
+                vi_name=poi['vi_name'],
+                xid=poi['xid'],
+                lat=poi['point']['lat'],
+                lng=poi['point']['lon'],
+                description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
+                preview=poi['preview'] if poi['preview'] is not None else util.PREVIEW
+            )
+            dis = util.get_distance_between_two_cord(cord, a_poi.get_cord())
+            list_pois.append((a_poi, dis))
+        
+        list_pois.sort(key=lambda x: x[1])
+        list_pois = [x[0] for x in list_pois]
         return list_pois
+
+        # list_pois = [InterestingPlace(
+        #     vi_name=poi['vi_name'],
+        #     xid=poi['xid'],
+        #     lat=poi['point']['lat'],
+        #     lng=poi['point']['lon'],
+        #     description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
+        #     preview=poi['preview'] if poi['preview'] is not None else util.PREVIEW
+        # ) for poi in list_poi]
+        # return list_pois
     
     @staticmethod
     def get_poi_detail(xid: str):
@@ -509,8 +512,34 @@ class util:
         return hotel_list
     
     @staticmethod
-    def get_hotel_list_from_city_name_v2(list_hotels: list): # get hotel list from city in db
-        list_hotel = [HotelModel(name=hotel['name'],lat=hotel['lat'],lng=hotel['lng']) for hotel in list_hotels]
+    def get_hotel_list_from_city_name_v2(list_hotels: list, hotel_filter_condtion: list): # get hotel list from city in db
+        # list_hotel = [HotelModel(xid=hotel['xid'],
+        #                          name=hotel['name'],
+        #                          lat=hotel['lat'],
+        #                          lng=hotel['lon'], 
+        #                          phone=hotel['phone'] if 'phone' in hotel else None, 
+        #                          email=hotel['email'] if 'email' in hotel else None) for hotel in list_hotels]
+        list_hotel = []
+        for hotel in list_hotels:
+            a_hotel = HotelModel(xid=hotel['xid'],
+                                 name=hotel['name'],
+                                 lat=hotel['lat'],
+                                 lng=hotel['lon'], 
+                                 phone=hotel['phone'] if 'phone' in hotel else None, 
+                                 email=hotel['email'] if 'email' in hotel else None)
+            if 'hotel_filter_condition' in hotel:
+                hotel_filter_condtions: list[dict] = hotel['hotel_filter_condition']
+                keys = [list(dictionary.keys())[0] for dictionary in hotel_filter_condtions]
+                values = [list(dictionary.values())[0] for dictionary in hotel_filter_condtions]
+                for filter in hotel_filter_condtion:
+                    for key, value in zip(keys, values):
+                        if filter == key:
+                            values[values.index(value)] = value*2
+                list_hotel.append((a_hotel, sum(values)/len(values)))
+            else:
+                list_hotel.append((a_hotel, 0))
+        list_hotel.sort(key=lambda x: x[1], reverse=True)
+        list_hotel = [hotel[0] for hotel in list_hotel]
         return list_hotel
         
     

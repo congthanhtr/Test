@@ -34,7 +34,7 @@ class RecommendService:
     db: Database = None
 
     NUM_OF_HOTEL_FROM_RESPONSE = 4
-    LIMIT_HOTEL_RESULT = 50
+    LIMIT_HOTEL_RESULT = 30
     LIMIT_POI_RESULT = 100
 
     def __init__(
@@ -93,7 +93,7 @@ class RecommendService:
 
         collection_poi = self.db.get_collection('vn_pois')
         collection_driving_time = self.db.get_collection('vn_provinces_driving_time')
-        collection_hotel = self.db.get_collection('vn_hotels')
+        collection_hotel = self.db.get_collection('vn_hotels_2')
         collection_tour_created = self.db.get_collection('log_tour_created')
 
 
@@ -116,25 +116,14 @@ class RecommendService:
             [BNHoltel1, BNHotel2]
         ]
         '''
-        hotel_filter = None
-        if self.hotel_filter_condition and len(self.hotel_filter_condition) > 0:
-            hotel_filter = '|'.join(self.hotel_filter_condition)
-            hotel_filter = f'({hotel_filter})'
-        else:
-            hotel_filter = '(other_hotels)'
         # self.hotel_filter_condition = hotel_filter
         for city in self.cities_to:
-            condition = {}
-            condition['province_name'] = util.preprocess_city_name(city=city)
-            if hotel_filter:
-                condition['kinds'] = {
-                    '$regex': hotel_filter
-                }
-            else:
-                condition['kinds'] = {'$regex': '(other_hotels)'}
-            collection_hotel_filter = list(collection_hotel.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}]))
-            hotels = util.get_hotel_list_from_city_name_v2(collection_hotel_filter)
-            hotels = sample(hotels, self.NUM_OF_HOTEL_FROM_RESPONSE) 
+            hotels_in_province = []
+            # get hotels that has booking infomation
+            hotels_in_province.extend(list(collection_hotel.find({'province_name': util.preprocess_city_name(city), 'hotel_filter_condition': {'$ne': None}})))
+            # then if not enough get random hotels
+            hotels_in_province.extend(list(collection_hotel.aggregate([{'$match': {'kinds': {'$regex': '(other_hotels)'}}}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}])))
+            hotels = util.get_hotel_list_from_city_name_v2(hotels_in_province, self.hotel_filter_condition)[:self. NUM_OF_HOTEL_FROM_RESPONSE]
             list_hotel_by_each_province.append(hotels)
         # get list pois by hotel
         list_pois_by_hotel: list[list[list[InterestingPlace]]] = []
@@ -155,7 +144,6 @@ class RecommendService:
             tour_filter = self.get_tour_filter_condtion()
         
         for hotel_in_province in list_hotel_by_each_province:
-            # xid_set = set()
             list_pois_by_hotel_in_province = []
             cities_to_index = list_hotel_by_each_province.index(hotel_in_province)
             condition = {}
@@ -168,12 +156,10 @@ class RecommendService:
                 condition['kinds'] = {
                     '$regex': '(interesting_places)'
                 }
-            print(condition)
             # self.tour_filter_condition = tour_filter
             for hotel in hotel_in_province:
                 colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=colelction_tour_filter)
-                # pois = [poi for poi in pois if util.can_add_set(xid_set, poi.xid)]
                 list_pois_by_hotel_in_province.append(pois)
             list_pois_by_hotel.append(list_pois_by_hotel_in_province)
         # print(len(list_pois_by_hotel[0][0]))
@@ -189,7 +175,7 @@ class RecommendService:
         # need a step before build program tour
         vector_similarity = self.get_vector_similarity()
         tour_created = list(collection_tour_created.find(
-            {"from": {"$in": self.code_cities_from}, "to": {"$in": self.code_cities_to}, "num_of_day": self.num_of_day},
+            {"from": {"$in": self.code_cities_from}, "to": {"$all": self.code_cities_to}, "num_of_day": self.num_of_day},
             {"ref": 0}
             )
         )
@@ -218,9 +204,12 @@ class RecommendService:
                     tour_program.no_of_day = no_of_day
                     tour_program.province = set()
                     tour_program.hotel = HotelModel(
+                        xid='',
                         name='',
                         lat=0,
-                        lng=0
+                        lng=0,
+                        phone='',
+                        email=''
                     )
                     tour_program.pois = []
                     for xid in day.split(','):
@@ -252,11 +241,11 @@ class RecommendService:
                 if n_places > len(list_pois_by_hotel[j][i]):
                     n_places_each_day = util.divide_equally(len(list_pois_by_hotel[j][i]), list_travel_time_by_each_province[j])
                 hotel_inday = list_hotel_by_each_province[j][i]
-                pois_inday = temp[j][i]
+                pois_inday = temp[j][i][:n_places]
                 for k in range(0, len(n_places_each_day)):
                     tour_program = TourProgramModel()
                     tour_program.no_of_day = no_of_day
-                    tour_program.province = self.code_cities_to[j]
+                    tour_program.province = [self.code_cities_to[j]]
                     tour_program.hotel = hotel_inday
                     tour_program.pois = []
                     if len(pois_inday) > n_places_each_day[k]:
@@ -338,7 +327,8 @@ class RecommendService:
                 condition['kinds'] = {
                     '$regex': 'other_hotels'
                 }
-            collection_hotel = self.db.get_collection('vn_hotels').find(condition)
+            collection_hotel = list(self.db.get_collection('vn_hotels_2').find(condition))
+            print(collection_hotel)
             hotels = util.get_hotel_list_from_city_name_v2(collection_hotel)
             hotels = sample(hotels, self.NUM_OF_HOTEL_FROM_RESPONSE) 
             list_hotel_by_each_province.append(hotels)
