@@ -156,6 +156,7 @@ class RecommendService:
                 condition['kinds'] = {
                     '$regex': '(interesting_places)'
                 }
+            print(condition)
             # self.tour_filter_condition = tour_filter
             for hotel in hotel_in_province:
                 colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))

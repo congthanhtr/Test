@@ -27,7 +27,6 @@ import traceback, sys
 
 BASE_API_URL = 'api/'
 db = util.get_db_handle(db_name='recommender')
-
 def index(request):
     API_ENDPOINT = BASE_API_URL+'index'
     result = ResultObject()
