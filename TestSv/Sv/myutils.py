@@ -348,7 +348,7 @@ class util:
                 lat=poi['point']['lat'],
                 lng=poi['point']['lon'],
                 description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
-                preview=poi['preview'] if 'preview' in poi else util.PREVIEW
+                preview=poi['preview'] if 'preview' in poi and poi['preview'] is not None else util.PREVIEW
             )
             dis = util.get_distance_between_two_cord(cord, a_poi.get_cord())
             list_pois.append((a_poi, dis))

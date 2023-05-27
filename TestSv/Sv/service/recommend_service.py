@@ -1,3 +1,4 @@
+import math
 from random import sample
 import time
 from .ml_service import MachineLearningService
@@ -36,6 +37,7 @@ class RecommendService:
     NUM_OF_HOTEL_FROM_RESPONSE = 4
     LIMIT_HOTEL_RESULT = 30
     LIMIT_POI_RESULT = 100
+    MINIMUM_POI_RESULT = 10
 
     def __init__(
         self,
@@ -148,6 +150,7 @@ class RecommendService:
             cities_to_index = list_hotel_by_each_province.index(hotel_in_province)
             condition = {}
             condition['province_name'] = util.preprocess_city_name(self.cities_to[cities_to_index])
+            condition['rate'] = {'$gte': 2}
             if tour_filter:
                 condition['kinds'] = {
                     '$regex': tour_filter
@@ -156,10 +159,13 @@ class RecommendService:
                 condition['kinds'] = {
                     '$regex': '(interesting_places)'
                 }
-            print(condition)
             # self.tour_filter_condition = tour_filter
             for hotel in hotel_in_province:
                 colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))
+                if len(colelction_tour_filter) < self.MINIMUM_POI_RESULT:
+                    condition.pop('rate')
+                    condition['rate'] = {'$eq': 1}
+                    colelction_tour_filter.extend(list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}])))
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=colelction_tour_filter)
                 list_pois_by_hotel_in_province.append(pois)
             list_pois_by_hotel.append(list_pois_by_hotel_in_province)
@@ -172,11 +178,11 @@ class RecommendService:
                                                                             city_from=self.cities_to[f-1],
                                                                             city_to=self.cities_to[f])
                 list_travel_time_between_provinces.append(driv_time)
-        
+
         # need a step before build program tour
         vector_similarity = self.get_vector_similarity()
         tour_created = list(collection_tour_created.find(
-            {"from": {"$in": self.code_cities_from}, "to": {"$all": self.code_cities_to}, "num_of_day": self.num_of_day},
+            {"from": {"$in": self.code_cities_from}, "to": {"$in": self.code_cities_to}, "num_of_day": self.num_of_day},
             {"ref": 0}
             )
         )
@@ -237,7 +243,7 @@ class RecommendService:
             for j in range(0, len(self.cities_to)):
                 is_last_province = 1 if j == (len(self.cities_to) - 1) else 0
                 driving_time_between_province = list_travel_time_between_provinces[j] if not is_last_province else list_travel_time_between_provinces[j] + total_travel_time
-                n_places = round(self.get_n_places(list_travel_time_by_each_province[j], driving_time_between_province, self.cost_range, len(self.cities_to), is_last_province)[0])
+                n_places = math.ceil(self.get_n_places(list_travel_time_by_each_province[j], driving_time_between_province, self.cost_range, len(self.cities_to), is_last_province)[0])
                 n_places_each_day = util.divide_equally(n_places, list_travel_time_by_each_province[j])
                 if n_places > len(list_pois_by_hotel[j][i]):
                     n_places_each_day = util.divide_equally(len(list_pois_by_hotel[j][i]), list_travel_time_by_each_province[j])
@@ -557,7 +563,7 @@ class RecommendService:
 
         tour_filter = self.get_tour_filter_condtion()
 
-        docs = list(collection_poi.find({'province_name': preprocess_destination_name, 'kinds': {'$regex': tour_filter}}, {'_id': 0}))
+        docs = list(collection_poi.find({'province_name': preprocess_destination_name, 'rate': {'$gte': 2}, 'kinds': {'$regex': tour_filter}}, {'_id': 0}))
         data = util.get_list_poi_by_cord_v3(cord=None, list_poi=docs)
 
         return data
