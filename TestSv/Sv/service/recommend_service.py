@@ -335,7 +335,6 @@ class RecommendService:
                     '$regex': 'other_hotels'
                 }
             collection_hotel = list(self.db.get_collection('vn_hotels_2').find(condition))
-            print(collection_hotel)
             hotels = util.get_hotel_list_from_city_name_v2(collection_hotel)
             hotels = sample(hotels, self.NUM_OF_HOTEL_FROM_RESPONSE) 
             list_hotel_by_each_province.append(hotels)
@@ -556,14 +555,15 @@ class RecommendService:
     def poi_recommend(self):
         collection_poi = self.db.get_collection('vn_pois')
 
-        full_destination_name = util.get_province_name_by_code(self.code_cities_to[0])
-
-
-        preprocess_destination_name = util.preprocess_city_name(full_destination_name)
+        preprocess_destination_name = [util.preprocess_city_name(util.get_province_name_by_code(code)) for code in self.code_cities_to]
 
         tour_filter = self.get_tour_filter_condtion()
 
-        docs = list(collection_poi.find({'province_name': preprocess_destination_name, 'rate': {'$gte': 2}, 'kinds': {'$regex': tour_filter}}, {'_id': 0}))
+        docs = []
+        for destination in preprocess_destination_name:
+            docs.extend(list(collection_poi.find({'province_name': destination, 'rate': {'$gte': 2}, 'kinds': {'$regex': tour_filter}}, {'_id': 0})))
+            if len(docs) < self.MINIMUM_POI_RESULT:
+                docs.extend(list(collection_poi.find({'province_name': destination, 'rate': {'$gte': 1}, 'kinds': {'$regex': tour_filter}}, {'_id': 0})))
         data = util.get_list_poi_by_cord_v3(cord=None, list_poi=docs)
 
         return data

@@ -325,7 +325,10 @@ class util:
         return list_poi
     
     @staticmethod
-    def get_list_poi_by_cord_v3(cord: tuple, list_poi: list = None): # get list from by db
+    def get_list_poi_by_cord_v3(cord: tuple, list_poi: list = None): 
+        '''
+        get list from by db
+        '''
         # list_pois = [InterestingPlace(
         #     vi_name=poi['vi_name'],
         #     xid=poi['xid'],
@@ -350,7 +353,9 @@ class util:
                 description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
                 preview=poi['preview'] if 'preview' in poi and poi['preview'] is not None else util.PREVIEW
             )
-            dis = util.get_distance_between_two_cord(cord, a_poi.get_cord())
+            dis = 0
+            if cord is not None:
+                dis = util.get_distance_between_two_cord(cord, a_poi.get_cord())
             list_pois.append((a_poi, dis))
         
         list_pois.sort(key=lambda x: x[1])

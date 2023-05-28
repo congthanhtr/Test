@@ -409,7 +409,8 @@ def poi_delete_by_xid(request, xid):
     if request.method == 'DELETE':
         try:
             collection_poi = db.get_collection('vn_pois')
-            data = collection_poi.delete_many({'xid':xid})
+            data = str(collection_poi.delete_one({'xid':xid}))
+            print(data)
             result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
             return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
         except Exception as e:
