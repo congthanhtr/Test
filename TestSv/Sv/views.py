@@ -1,7 +1,10 @@
 import json
 import time
+import uuid
+
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.conf import settings
 from http import HTTPStatus
 
 from .crawler import Crawler
@@ -439,8 +442,8 @@ def poi_add_and_update(request):
             #endregion
             collection_poi = db.get_collection('vn_pois')
             data = {}
-            data['xid'] = xid
-            data['province_name'] = util.get_province_name_by_code(province_id) if not util.is_null_or_empty(province_id) else None
+            data['xid'] = xid if not util.is_null_or_empty(xid) else uuid.uuid4().hex
+            data['province_name'] = util.preprocess_city_name(util.get_province_name_by_code(province_id)) if not util.is_null_or_empty(province_id) else None
             data['vi_name'] = vi_name
             data['name'] = vi_name
             data['kinds'] = kinds
@@ -451,6 +454,7 @@ def poi_add_and_update(request):
             data['description'] = description
             data['preview'] = dict()
             data['preview']['source'] = preview
+            data['rate'] = 2
             
             collection_poi.insert_one(data)
             data.pop('_id')
@@ -480,7 +484,7 @@ def poi_add_and_update(request):
                 collection_poi = db.get_collection('vn_pois')
                 if len(list(collection_poi.find({'xid': xid}))) == 0:
                     raise ValueError('No xid found')
-                data['province_name'] = util.get_province_name_by_code(province_id) if not util.is_null_or_empty(province_id) else None
+                data['province_name'] = util.preprocess_city_name(util.get_province_name_by_code(province_id)) if not util.is_null_or_empty(province_id) else None
                 data['vi_name'] = name
                 data['name'] = name
                 data['kinds'] = kinds
@@ -491,6 +495,7 @@ def poi_add_and_update(request):
                 data['description'] = description
                 data['preview'] = dict()
                 data['preview']['source'] = preview
+                data['rate'] = 2
                 collection_poi.update_many({'xid': xid}, {'$set': data})
                 result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
                 return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
@@ -506,4 +511,40 @@ def poi_add_and_update(request):
     else:
         result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
         return JsonResponse(util.to_json(result), status=HTTPStatus.METHOD_NOT_ALLOWED)
-    
+
+def extract_info_to_excel(request):
+    API_ENDPOINT = BASE_API_URL+'v2/extract_info_to_excel'
+    result = ResultObject()
+    if request.method == 'POST':
+        try:
+            #region bodycontent
+            body = json.loads(request.body)
+            num_of_day = body['num_of_day'] # số ngày
+            num_of_night = body['num_of_night'] # số đêm
+            cities_from = body['from']
+            cities_to = body['to']
+            cost_range = body['cost_range']
+            #endregion
+
+            time_travel_service = TimeTravelService()
+            ml_service = MachineLearningService()
+
+            recommend_service = RecommendService(
+                num_of_day=num_of_day, 
+                num_of_night=num_of_night, 
+                cities_from=cities_from, 
+                cities_to=cities_to, 
+                cost_range=cost_range,
+                ml_service=ml_service, 
+                time_travel_service=time_travel_service,
+                db=db)
+            result = result.assign_value(data=recommend_service.extract_info_to_excel(), status_code=HTTPStatus.OK.value)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
+
+        except Exception as e:
+            result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+
+    else:
+        result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
+        return JsonResponse(util.to_json(result), status=HTTPStatus.METHOD_NOT_ALLOWED)
