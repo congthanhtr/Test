@@ -4,7 +4,6 @@ import uuid
 
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.conf import settings
 from http import HTTPStatus
 
 from .crawler import Crawler
