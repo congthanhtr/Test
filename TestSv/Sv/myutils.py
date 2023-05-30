@@ -351,7 +351,8 @@ class util:
                 lat=poi['point']['lat'],
                 lng=poi['point']['lon'],
                 description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
-                preview=poi['preview'] if 'preview' in poi and poi['preview'] is not None else util.PREVIEW
+                preview=poi['preview'] if 'preview' in poi and poi['preview'] is not None else util.PREVIEW,
+                rate=poi['rate'] if 'rate' in poi else 0
             )
             dis = 0
             if cord is not None:

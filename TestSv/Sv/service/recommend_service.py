@@ -94,17 +94,11 @@ class RecommendService:
         # validate input model goes here
 
         collection_poi = self.db.get_collection('vn_pois')
-        collection_driving_time = self.db.get_collection('vn_provinces_driving_time')
         collection_hotel = self.db.get_collection('vn_hotels_2')
         collection_tour_created = self.db.get_collection('log_tour_created')
 
 
         # calculate total travel time with predicted transport
-        # time_travel_service = self.time_travel_service.calculate_time_travel(self.cities_from, self.cities_to, collection=collection_driving_time)
-        # predict_transport_data = self.preprocess_data_for_predict_transport()
-        # predict_transport_model = self.ml_service.get_predict_transport_model()
-        # transport = predict_transport_model.model.predict(predict_transport_data)[0]
-        # recommend_model.main_transport = transport
         total_travel_time, transport = self.get_total_travel_time()
         recommend_model.main_transport = transport
 
@@ -164,10 +158,15 @@ class RecommendService:
             for hotel in hotel_in_province:
                 colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))
                 if len(colelction_tour_filter) < self.MINIMUM_POI_RESULT:
+                    # if not meet the minimum requirement, lower the condition
                     condition['rate'] = {'$eq': 1}
                     colelction_tour_filter.extend(list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}])))
+                if len(colelction_tour_filter) < self.num_of_day:
+                    raise ValueError('No poi suitable with the condition')
                 pois = util.get_list_poi_by_cord_v3(hotel.get_cord(), list_poi=colelction_tour_filter)
                 list_pois_by_hotel_in_province.append(pois)
+                # then reset conditions back to good quality poi
+                condition['rate'] = {'$gte': 2}
             list_pois_by_hotel.append(list_pois_by_hotel_in_province)
         # print(len(list_pois_by_hotel[0][0]))
         
@@ -223,7 +222,8 @@ class RecommendService:
                                 description=poi_with_xid['vi_description'] if 'vi_description' in poi_with_xid else util.LOREM,
                                 lat=poi_with_xid['point']['lat'],
                                 lng=poi_with_xid['point']['lon'],
-                                preview=poi_with_xid['preview']
+                                preview=poi_with_xid['preview'] if 'preview' in poi_with_xid and poi_with_xid['preview'] is not None else util.PREVIEW,
+                                rate=poi_with_xid['rate']
                             )
                             tour_program.province.add(util.get_province_code_by_name(poi_with_xid['province_name']))
                             tour_program.pois.append(interesting_place)
@@ -242,9 +242,16 @@ class RecommendService:
                 n_places = math.ceil(self.get_n_places(list_travel_time_by_each_province[j], driving_time_between_province, self.cost_range, len(self.cities_to), is_last_province)[0])
                 n_places_each_day = util.divide_equally(n_places, list_travel_time_by_each_province[j])
                 if n_places > len(list_pois_by_hotel[j][i]):
+                    n_places = len(list_pois_by_hotel[j][i])
                     n_places_each_day = util.divide_equally(len(list_pois_by_hotel[j][i]), list_travel_time_by_each_province[j])
                 hotel_inday = list_hotel_by_each_province[j][i]
-                pois_inday = temp[j][i][:n_places]
+                # get all qualified locations
+                pois_inday = [poi for poi in temp[j][i] if poi.rate>= 2]
+                # remove previous locations
+                temp[j][i] = [poi for poi in temp[j][i] if poi not in pois_inday]
+                # get other for enough n_places
+                # pois_inday = sample(temp[j][i], n_places)
+                pois_inday.extend(sample(temp[j][i], n_places-len(pois_inday) if len(pois_inday) <= n_places else 0))
                 for k in range(0, len(n_places_each_day)):
                     tour_program = TourProgramModel()
                     tour_program.no_of_day = no_of_day

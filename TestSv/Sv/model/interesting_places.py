@@ -13,11 +13,13 @@ class InterestingPlace(HasCoord):
     vi_name: str = ''
     description: str = ''
     preview: Preview
+    rate: int = 0
 
-    def __init__(self, xid = None, vi_name=None, description=None, preview=None, lat=None, lng=None) -> None:
+    def __init__(self, xid = None, vi_name=None, description=None, preview=None, lat=None, lng=None, rate=None) -> None:
         self.xid = xid
         self.vi_name = vi_name
         self.description = description
         self.preview = preview
         self.lat = lat
         self.lng = lng
+        self.rate = rate
