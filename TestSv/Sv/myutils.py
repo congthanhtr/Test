@@ -426,14 +426,6 @@ class util:
             for c in city:
                     list_city_geo.append(util.searchForLocation_v2(city))
         return list_city_geo
-    
-    @staticmethod
-    def can_add_set(s: set, element):
-        origin_len = len(s)
-        s.add(element)
-        if len(s) == origin_len:
-            return False
-        return True
 
     @staticmethod
     def get_neareast_airport(cord: list):
@@ -500,6 +492,7 @@ class util:
     
     @staticmethod
     def get_hotel_list_from_city_name(city: str):
+        '''Deprecated now, use get_hotel_list_from_city_name_v2() instead'''
         hotel_list = []
         city_cord = util.get_lat_lon([city])[0]
         url = util.OPENTRIPMAP_HOTELS_API.format(city_cord[1], city_cord[0], util.API_KEY_OPENTRIPMAP)
@@ -519,12 +512,6 @@ class util:
     
     @staticmethod
     def get_hotel_list_from_city_name_v2(list_hotels: list, hotel_filter_condtion: list): # get hotel list from city in db
-        # list_hotel = [HotelModel(xid=hotel['xid'],
-        #                          name=hotel['name'],
-        #                          lat=hotel['lat'],
-        #                          lng=hotel['lon'], 
-        #                          phone=hotel['phone'] if 'phone' in hotel else None, 
-        #                          email=hotel['email'] if 'email' in hotel else None) for hotel in list_hotels]
         list_hotel = []
         for hotel in list_hotels:
             a_hotel = HotelModel(xid=hotel['xid'],

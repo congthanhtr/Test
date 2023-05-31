@@ -639,17 +639,19 @@ class RecommendService:
         distance = time_travel_service.distance
         flight_time = time_travel_service.flight_time
         driving_time = time_travel_service.driving_time
+        railway_time = time_travel_service.railway_time
 
-        list_provinces_has_train = [province['admin_name'] for province in self.db.get_collection('vn_provinces').find({
-            'has_train': True
-        }, {
-            'admin_name': 1,
-            '_id': 0
-        })]
-        if self.cities_from[0] in list_provinces_has_train and self.cities_to[0] in list_provinces_has_train:
-            railway_time = time_travel_service.railway_time
-        else:
-            railway_time = 0
+        # list_provinces_has_train = [province['admin_name'] for province in self.db.get_collection('vn_provinces').find({
+        #     'has_train': True
+        # }, {
+        #     'admin_name': 1,
+        #     '_id': 0
+        # })]
+        # print('preprocess data: ', self.cities_from[0], self.cities_to[0])
+        # if self.cities_from[0] in list_provinces_has_train and self.cities_to[0] in list_provinces_has_train:
+        #     railway_time = time_travel_service.railway_time
+        # else:
+        #     railway_time = 0
 
         # (num_of_day  price  contains_ticket  distance  driving_time  flight_time  railway_time)
         return pd.DataFrame([[self.num_of_day, self.cost_range, distance, driving_time, flight_time, railway_time]])
@@ -713,7 +715,7 @@ class RecommendService:
     def extract_info_to_excel(self):
         data = []
         # Days  TimeTravel  Price   Total province   Is Last Province 
-        total_travel_time, travel = self.get_total_travel_time()
+        total_travel_time, transport = self.get_total_travel_time()
         list_travel_time_between_provinces = self.get_list_travel_times_between_provinces(total_travel_time)
         list_travel_time_by_each_provinces = self.get_list_travel_time_by_each_province()
         for i in range(len(self.code_cities_to)):
@@ -721,6 +723,7 @@ class RecommendService:
                     list_travel_time_between_provinces[i],
                     self.cost_range,
                     len(self.code_cities_to),
-                    1 if i == len(self.code_cities_to) - 1 else 0]
+                    1 if i == len(self.code_cities_to) - 1 else 0,
+                    transport]
             data.append(arow)
         return data
