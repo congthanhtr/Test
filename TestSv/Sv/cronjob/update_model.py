@@ -30,7 +30,7 @@ def add_new_data(new_data, data_path = None, result_path = None, workbook = None
         workbook.save(result_path)
 
 def retrain_model(data_path, result_path):
-    df = pd.read_excel(data_path).dropna()
+    df = pd.read_excel(data_path).dropna().drop_duplicates()
     x_train = df.drop("Places", axis="columns")
     y_train = df.Places
     # new retrain model
@@ -76,6 +76,7 @@ if len(log_tour_created_today) > 0:
             for row in a_linear_row:
                 row.pop(-1)
 
+
             for i in range(len(a_linear_row)):
                 temp = []
                 num_of_day = a_linear_row[i][0]
@@ -85,6 +86,7 @@ if len(log_tour_created_today) > 0:
                     temp.extend(poi.split(','))
                 temp = len(temp)
                 a_linear_row[i].append(temp)
+
             # add new data to workbook
             [add_new_data(new_data=row, workbook=linear_workbook, result_path=DATA_PATH_LINEAR_MODEL) for row in a_linear_row]
             add_new_data(new_data=a_decision_tree_row, workbook=decisiontree_workook, result_path=RESULT_PATH_DECESIONTREE_MODEL)

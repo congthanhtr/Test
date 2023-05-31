@@ -641,18 +641,6 @@ class RecommendService:
         driving_time = time_travel_service.driving_time
         railway_time = time_travel_service.railway_time
 
-        # list_provinces_has_train = [province['admin_name'] for province in self.db.get_collection('vn_provinces').find({
-        #     'has_train': True
-        # }, {
-        #     'admin_name': 1,
-        #     '_id': 0
-        # })]
-        # print('preprocess data: ', self.cities_from[0], self.cities_to[0])
-        # if self.cities_from[0] in list_provinces_has_train and self.cities_to[0] in list_provinces_has_train:
-        #     railway_time = time_travel_service.railway_time
-        # else:
-        #     railway_time = 0
-
         # (num_of_day  price  contains_ticket  distance  driving_time  flight_time  railway_time)
         return pd.DataFrame([[self.num_of_day, self.cost_range, distance, driving_time, flight_time, railway_time]])
     
@@ -677,7 +665,7 @@ class RecommendService:
                 driv_time = self.time_travel_service._calculate_driving_time(collection=collection_driving_time,
                                                                             city_from=self.cities_to[f-1],
                                                                             city_to=self.cities_to[f])
-                list_travel_time_between_provinces.append(driv_time)
+                list_travel_time_between_provinces.append(driv_time[0])
         return list_travel_time_between_provinces
 
     def get_list_travel_time_by_each_province(self):
@@ -717,6 +705,7 @@ class RecommendService:
         # Days  TimeTravel  Price   Total province   Is Last Province 
         total_travel_time, transport = self.get_total_travel_time()
         list_travel_time_between_provinces = self.get_list_travel_times_between_provinces(total_travel_time)
+        print(list_travel_time_between_provinces)
         list_travel_time_by_each_provinces = self.get_list_travel_time_by_each_province()
         for i in range(len(self.code_cities_to)):
             arow = [list_travel_time_by_each_provinces[i], 
