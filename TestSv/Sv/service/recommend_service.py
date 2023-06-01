@@ -119,7 +119,7 @@ class RecommendService:
             # get hotels that has booking infomation
             hotels_in_province.extend(list(collection_hotel.find({'province_name': util.preprocess_city_name(city), 'hotel_filter_condition': {'$ne': None}})))
             # then if not enough get random hotels
-            hotels_in_province.extend(list(collection_hotel.aggregate([{'$match': {'kinds': {'$regex': '(other_hotels)'}}}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}])))
+            hotels_in_province.extend(list(collection_hotel.aggregate([{'$match': {'province_name': util.preprocess_city_name(city), 'kinds': {'$regex': '(other_hotels)'}}}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}])))
             hotels = util.get_hotel_list_from_city_name_v2(hotels_in_province, self.hotel_filter_condition)[:self. NUM_OF_HOTEL_FROM_RESPONSE]
             list_hotel_by_each_province.append(hotels)
         # get list pois by hotel
@@ -155,6 +155,7 @@ class RecommendService:
                     '$regex': '(interesting_places)'
                 }
             # self.tour_filter_condition = tour_filter
+            print(condition)
             for hotel in hotel_in_province:
                 colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))
                 if len(colelction_tour_filter) < self.MINIMUM_POI_RESULT:

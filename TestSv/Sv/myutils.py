@@ -476,7 +476,7 @@ class util:
         for i in range(1, 100):
             if f'P_{i}' in ProvinceEnum.__members__:
                 if name in ProvinceEnum[f'P_{i}'].value.name:
-                    return ProvinceEnum[f'P_{i}'].value.code
+                    return str(ProvinceEnum[f'P_{i}'].value.code)
         return None
     
     @staticmethod
