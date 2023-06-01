@@ -220,10 +220,10 @@ class RecommendService:
                             interesting_place = InterestingPlace(
                                 xid=poi_with_xid['xid'],
                                 vi_name=poi_with_xid['vi_name'],
-                                description=poi_with_xid['vi_description'] if 'vi_description' in poi_with_xid else util.LOREM,
+                                description=poi_with_xid['vi_description'] if 'vi_description' in poi_with_xid and not util.is_null_or_empty(poi['vi_description']) else util.LOREM,
                                 lat=poi_with_xid['point']['lat'],
                                 lng=poi_with_xid['point']['lon'],
-                                preview=poi_with_xid['preview'] if 'preview' in poi_with_xid and poi_with_xid['preview'] is not None else util.PREVIEW,
+                                preview=poi_with_xid['preview'] if 'preview' in poi_with_xid and not util.is_null_or_empty(poi['preview']) else util.PREVIEW,
                                 rate=poi_with_xid['rate']
                             )
                             tour_program.province.add(util.get_province_code_by_name(poi_with_xid['province_name']))
@@ -706,7 +706,6 @@ class RecommendService:
         # Days  TimeTravel  Price   Total province   Is Last Province 
         total_travel_time, transport = self.get_total_travel_time()
         list_travel_time_between_provinces = self.get_list_travel_times_between_provinces(total_travel_time)
-        print(list_travel_time_between_provinces)
         list_travel_time_by_each_provinces = self.get_list_travel_time_by_each_province()
         for i in range(len(self.code_cities_to)):
             arow = [list_travel_time_by_each_provinces[i], 

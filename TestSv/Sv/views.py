@@ -214,7 +214,6 @@ def predict_vehicle(request):
     # Return the result as a JSON response
     return JsonResponse(util.to_json(resData))
 
-
 def predict_places(request):
     API_ENDPOINT = BASE_API_URL+'predict_places'
     result = ResultObject()
@@ -443,16 +442,16 @@ def poi_add_and_update(request):
             data = {}
             data['xid'] = xid if not util.is_null_or_empty(xid) else uuid.uuid4().hex
             data['province_name'] = util.preprocess_city_name(util.get_province_name_by_code(province_id)) if not util.is_null_or_empty(province_id) else None
-            data['vi_name'] = vi_name
-            data['name'] = vi_name
-            data['kinds'] = kinds
+            data['vi_name'] = str(vi_name)
+            data['name'] = str(vi_name)
+            data['kinds'] = str(kinds)
             data['point'] = dict()
-            data['point']['lat'] = lat
-            data['point']['lon'] = lon
-            data['vi_description'] = description
-            data['description'] = description
+            data['point']['lat'] = float(lat)
+            data['point']['lon'] = float(lon)
+            data['vi_description'] = str(description)
+            data['description'] = str(description)
             data['preview'] = dict()
-            data['preview']['source'] = preview
+            data['preview']['source'] = str(preview)
             data['rate'] = 2
             
             collection_poi.insert_one(data)
@@ -481,20 +480,21 @@ def poi_add_and_update(request):
             data = {}
             if not util.is_null_or_empty(xid):
                 collection_poi = db.get_collection('vn_pois')
-                if len(list(collection_poi.find({'xid': xid}))) == 0:
+                poi = list(collection_poi.find({'xid': xid}))
+                if len(list(poi)) == 0:
                     raise ValueError('No xid found')
                 data['province_name'] = util.preprocess_city_name(util.get_province_name_by_code(province_id)) if not util.is_null_or_empty(province_id) else None
-                data['vi_name'] = name
-                data['name'] = name
-                data['kinds'] = kinds
+                data['vi_name'] = str(name)
+                data['name'] = str(name)
+                data['kinds'] = str(kinds)
                 data['point'] = dict()
-                data['point']['lat'] = lat
-                data['point']['lon'] = lon
-                data['vi_description'] = description
-                data['description'] = description
+                data['point']['lat'] = float(lat)
+                data['point']['lon'] = float(lon)
+                data['vi_description'] = str(description)
+                data['description'] = str(description)
                 data['preview'] = dict()
-                data['preview']['source'] = preview
-                data['rate'] = 2
+                data['preview']['source'] = str(preview)
+                data['rate'] = poi[0]['rate']
                 collection_poi.update_many({'xid': xid}, {'$set': data})
                 result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
                 return JsonResponse(util.to_json(result), status=HTTPStatus.OK)

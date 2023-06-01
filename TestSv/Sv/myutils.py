@@ -350,8 +350,8 @@ class util:
                 xid=poi['xid'],
                 lat=poi['point']['lat'],
                 lng=poi['point']['lon'],
-                description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
-                preview=poi['preview'] if 'preview' in poi and poi['preview'] is not None else util.PREVIEW,
+                description=poi['vi_description'] if 'vi_description' in poi and not util.is_null_or_empty(poi['vi_description']) else util.LOREM,
+                preview=poi['preview'] if 'preview' in poi and not util.is_null_or_empty(poi['preview']) else util.PREVIEW,
                 rate=poi['rate'] if 'rate' in poi else 0
             )
             dis = 0
