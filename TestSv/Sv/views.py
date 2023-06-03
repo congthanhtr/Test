@@ -484,6 +484,7 @@ def poi_add_and_update(request):
                 poi = list(collection_poi.find({'xid': xid}))
                 if len(list(poi)) == 0:
                     raise ValueError('No xid found')
+                poi = poi[0]
                 data['province_name'] = util.preprocess_city_name(util.get_province_name_by_code(province_id)) if not util.is_null_or_empty(province_id) else poi['province_name']
                 data['province_id'] = province_id if not util.is_null_or_empty(province_id) else poi['province_id']
                 data['vi_name'] = str(name)
