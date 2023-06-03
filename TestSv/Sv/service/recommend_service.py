@@ -155,7 +155,6 @@ class RecommendService:
                     '$regex': '(interesting_places)'
                 }
             # self.tour_filter_condition = tour_filter
-            print(condition)
             for hotel in hotel_in_province:
                 colelction_tour_filter = list(collection_poi.aggregate([{'$match': condition}, {'$sample': {'size': self.LIMIT_POI_RESULT}}]))
                 if len(colelction_tour_filter) < self.MINIMUM_POI_RESULT:
@@ -224,7 +223,9 @@ class RecommendService:
                                 lat=poi_with_xid['point']['lat'],
                                 lng=poi_with_xid['point']['lon'],
                                 preview=poi_with_xid['preview'] if 'preview' in poi_with_xid and not util.is_null_or_empty(poi['preview']) else util.PREVIEW,
-                                rate=poi_with_xid['rate']
+                                rate=poi_with_xid['rate'],
+                                kinds=util.get_poi_kinds(poi_with_xid['kinds']),
+                                province_id=poi_with_xid['province_id']
                             )
                             tour_program.province.add(util.get_province_code_by_name(poi_with_xid['province_name']))
                             tour_program.pois.append(interesting_place)

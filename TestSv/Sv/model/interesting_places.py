@@ -14,8 +14,10 @@ class InterestingPlace(HasCoord):
     description: str = ''
     preview: Preview
     rate: int = 0
+    kinds: list = []
+    province_id: str = ''
 
-    def __init__(self, xid = None, vi_name=None, description=None, preview=None, lat=None, lng=None, rate=None) -> None:
+    def __init__(self, xid = None, vi_name=None, description=None, preview=None, lat=None, lng=None, rate=None, kinds=None, province_id=None) -> None:
         self.xid = xid
         self.vi_name = vi_name
         self.description = description
@@ -23,3 +25,6 @@ class InterestingPlace(HasCoord):
         self.lat = lat
         self.lng = lng
         self.rate = rate
+        self.kinds = kinds
+        self.province_id = province_id
+        

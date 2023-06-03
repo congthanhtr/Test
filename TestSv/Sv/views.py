@@ -442,6 +442,7 @@ def poi_add_and_update(request):
             data = {}
             data['xid'] = xid if not util.is_null_or_empty(xid) else uuid.uuid4().hex
             data['province_name'] = util.preprocess_city_name(util.get_province_name_by_code(province_id)) if not util.is_null_or_empty(province_id) else None
+            data['province_id'] = str(province_id)
             data['vi_name'] = str(vi_name)
             data['name'] = str(vi_name)
             data['kinds'] = str(kinds)
@@ -483,10 +484,11 @@ def poi_add_and_update(request):
                 poi = list(collection_poi.find({'xid': xid}))
                 if len(list(poi)) == 0:
                     raise ValueError('No xid found')
-                data['province_name'] = util.preprocess_city_name(util.get_province_name_by_code(province_id)) if not util.is_null_or_empty(province_id) else None
+                data['province_name'] = util.preprocess_city_name(util.get_province_name_by_code(province_id)) if not util.is_null_or_empty(province_id) else poi['province_name']
+                data['province_id'] = province_id if not util.is_null_or_empty(province_id) else poi['province_id']
                 data['vi_name'] = str(name)
                 data['name'] = str(name)
-                data['kinds'] = str(kinds)
+                data['kinds'] = str(kinds) if not util.is_null_or_empty(kinds) else poi['kinds']
                 data['point'] = dict()
                 data['point']['lat'] = float(lat)
                 data['point']['lon'] = float(lon)

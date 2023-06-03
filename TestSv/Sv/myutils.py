@@ -46,6 +46,116 @@ class util:
     OPENTRIPMAP_HOTELS_API = 'https://api.opentripmap.com/0.1/en/places/radius?radius=50000&lon={}&lat={}&kinds=other_hotels&limit=20&apikey={}'
     OPENTRIPMAP_POI_API = 'https://api.opentripmap.com/0.1/en/places/radius?radius=50000&lon={}&lat={}&kinds={}&limit=20&apikey={}'
     
+    TOUR_SINH_THAI = ['nature_reserves', 'islands', 'waterfalls', 'canyons', 'caves', 'garden', 'dams']
+    TOUR_VAN_HOA = [
+      'historic_architecture',
+      'churches',
+      'palaces',
+      'art_galleries',
+      'military_museums',
+      'other_museums',
+      'opera_houses',
+      'mausoleums',
+      'other_fortifications',
+      'other_temples',
+      'monuments_and_memorials',
+      'squares'
+    ]
+    TOUR_NGHI_DUONG = [
+      'resorts',
+      'villas_and_chalet',
+      'fountain',
+      'beaches',
+      'other_beaches',
+      'lagoons',
+      'amusement_parks',
+      'water_parks',
+      'islands',
+    ]
+    TOUR_GIAI_TRI = [
+      'malls',
+      'marketplaces',
+      'supermarkets',
+      'boatsharing',
+      'campsites',
+      'picnic_site',
+      'theatres_and_entertainments',
+      'amusement_parks',
+      'water_parks',
+      'skyscrapers',
+      'zoo',
+      'pedestrians',
+    ]
+    TOUR_THE_THAO = ['sport', 'water_parks']
+    TOUR_MAO_HIEM = [
+      'climbing',
+      'kitesurfing',
+      'surfing',
+      'diving',
+      'waterfalls',
+      'caves',
+      'mountain_peaks',
+      'geological_formations'
+    ]
+    TOUR_GIA_DINH = ['beaches', 'amusement_parks', 'supermarket', 'malls', 'diving', 'picnic_sites', 'mausoleums', 'water_parks', 'resort', 'other_museums', 'resorts', 'villas_and_chalet']
+    TOUR_THEO_DOAN = [
+      'beaches',
+      'campsites',
+      'national_parks',
+      'water_parks',
+      'nightclubs',
+      'islands',
+      'amusement_parks'
+    ]
+    TOUR_BIEN = ['beaches', 'islands']
+    TOUR_NUI = ['geological_formations', 'other_archaeological_sites', 'climbing']
+    TOUR_DO_THI = [
+      'urban_environment',
+      'supermarkets',
+      'malls',
+      'picnic_site',
+      'restaurants',
+      'power_stations',
+      'railway_stations',
+      'concert_halls',
+      'music_venues',
+      'museums',
+      'other_buildings_and_structures',
+      'palaces',
+      'nightclubs',
+      'resorts',
+      'water_parks',
+      'amusement_parks'
+    ]
+
+    @staticmethod
+    def get_poi_kinds(kinds: str):
+        du_lich = 'Du lịch '
+        poi_kinds = []
+        if ','.join(util.TOUR_SINH_THAI) in kinds:
+            poi_kinds.append(du_lich+'sinh thái')
+        if ','.join(util.TOUR_VAN_HOA) in kinds:
+            poi_kinds.append(du_lich+'văn hóa')
+        if ','.join(util.TOUR_NGHI_DUONG) in kinds:
+            poi_kinds.append(du_lich+'nghỉ dưỡng')
+        if ','.join(util.TOUR_GIAI_TRI) in kinds:
+            poi_kinds.append(du_lich+'giải trí')
+        if ','.join(util.TOUR_THE_THAO) in kinds:
+            poi_kinds.append(du_lich+'thể thao')
+        if ','.join(util.TOUR_MAO_HIEM) in kinds:
+            poi_kinds.append(du_lich+'mạo hiểm')
+        if ','.join(util.TOUR_GIA_DINH) in kinds:
+            poi_kinds.append(du_lich+'gia đình')
+        if ','.join(util.TOUR_THEO_DOAN) in kinds:
+            poi_kinds.append(du_lich+'theo đoàn')
+        if ','.join(util.TOUR_BIEN) in kinds:
+            poi_kinds.append(du_lich+'biển')
+        if ','.join(util.TOUR_NUI) in kinds:
+            poi_kinds.append(du_lich+'núi')
+        if ','.join(util.TOUR_DO_THI) in kinds:
+            poi_kinds.append(du_lich+'đô thị')
+        return poi_kinds
+
     @staticmethod
     def get_exception(at: str, msg: str) -> dict:
         '''
@@ -329,20 +439,6 @@ class util:
         '''
         get list from by db
         '''
-        # list_pois = [InterestingPlace(
-        #     vi_name=poi['vi_name'],
-        #     xid=poi['xid'],
-        #     lat=poi['point']['lat'],
-        #     lng=poi['point']['lon'],
-        #     description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
-        #     preview=poi['preview']
-        # ) for poi in list_poi if util.get_distance_between_two_cord(cord, InterestingPlace(vi_name=poi['vi_name'],
-        #     xid=poi['xid'],
-        #     lat=poi['point']['lat'],
-        #     lng=poi['point']['lon'],
-        #     description=poi['description'],
-        #     preview=poi['preview']).get_cord()) < util.MAXIUM_DISTANCE_FROM_HOTEL_TO_POI]
-        
         list_pois = []
         for poi in list_poi:
             a_poi = InterestingPlace(
@@ -352,7 +448,9 @@ class util:
                 lng=poi['point']['lon'],
                 description=poi['vi_description'] if 'vi_description' in poi and not util.is_null_or_empty(poi['vi_description']) else util.LOREM,
                 preview=poi['preview'] if 'preview' in poi and not util.is_null_or_empty(poi['preview']) else util.PREVIEW,
-                rate=poi['rate'] if 'rate' in poi else 0
+                rate=poi['rate'] if 'rate' in poi else 0,
+                kinds=util.get_poi_kinds(poi['kinds']),
+                province_id=poi['province_id']
             )
             dis = 0
             if cord is not None:
@@ -362,16 +460,6 @@ class util:
         list_pois.sort(key=lambda x: x[1])
         list_pois = [x[0] for x in list_pois]
         return list_pois
-
-        # list_pois = [InterestingPlace(
-        #     vi_name=poi['vi_name'],
-        #     xid=poi['xid'],
-        #     lat=poi['point']['lat'],
-        #     lng=poi['point']['lon'],
-        #     description=poi['vi_description'] if 'vi_description' in poi else util.LOREM,
-        #     preview=poi['preview'] if poi['preview'] is not None else util.PREVIEW
-        # ) for poi in list_poi]
-        # return list_pois
     
     @staticmethod
     def get_poi_detail(xid: str):
