@@ -497,7 +497,7 @@ def poi_add_and_update(request):
                 data['description'] = str(description)
                 data['preview'] = dict()
                 data['preview']['source'] = str(preview)
-                data['rate'] = poi[0]['rate']
+                data['rate'] = poi['rate']
                 collection_poi.update_many({'xid': xid}, {'$set': data})
                 result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
                 return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
