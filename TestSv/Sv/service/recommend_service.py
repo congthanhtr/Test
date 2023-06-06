@@ -87,6 +87,8 @@ class RecommendService:
         recommend_model.cities_from = self.cities_from
         recommend_model.cities_to = self.cities_to
         recommend_model.type_of_tour = self.type_of_tour
+        if self.cost_range <= 0:
+            raise ValueError('cost range must be greater than 0')
         recommend_model.cost_range = self.cost_range
         recommend_model.program = []
         
@@ -241,7 +243,9 @@ class RecommendService:
             for j in range(0, len(self.cities_to)):
                 is_last_province = 1 if j == (len(self.cities_to) - 1) else 0
                 driving_time_between_province = list_travel_time_between_provinces[j] if not is_last_province else list_travel_time_between_provinces[j] + total_travel_time
-                n_places = math.ceil(self.get_n_places(list_travel_time_by_each_province[j], driving_time_between_province, self.cost_range, len(self.cities_to), is_last_province)[0])
+                n_places = math.floor(self.get_n_places(list_travel_time_by_each_province[j], driving_time_between_province, self.cost_range, len(self.cities_to), is_last_province)[0])
+                if n_places < self.num_of_day:
+                    raise ValueError('not enough places')
                 n_places_each_day = util.divide_equally(n_places, list_travel_time_by_each_province[j])
                 if n_places > len(list_pois_by_hotel[j][i]):
                     n_places = len(list_pois_by_hotel[j][i])

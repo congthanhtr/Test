@@ -4,6 +4,7 @@ import uuid
 
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.conf import settings
 from http import HTTPStatus
 
 from .crawler import Crawler
@@ -21,7 +22,7 @@ import traceback, sys
 # from .ml_model.decision_tree import model as dc_model
 # from .ml_model.decision_tree import inputs
 
-# from .ml_model.linear_regression import lm_model
+from .ml_model.linear_regression import lm_model
 
 # from .ml_model.logistic_regression import lgr_model
 
@@ -562,13 +563,7 @@ def rearrange_grid_view(request):
             xids = body['xids']
             #endregion
 
-            time_travel_service = TimeTravelService()
-            ml_service = MachineLearningService()
-
-            recommend_service = RecommendService(
-                ml_service=ml_service, 
-                time_travel_service=time_travel_service,
-                db=db)
+            recommend_service = RecommendService(db=db)
             result = result.assign_value(data=recommend_service.rearrange_grid_view(xids=xids), status_code=HTTPStatus.OK.value)
             return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
 
