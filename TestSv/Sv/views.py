@@ -22,7 +22,7 @@ import traceback, sys
 # from .ml_model.decision_tree import model as dc_model
 # from .ml_model.decision_tree import inputs
 
-from .ml_model.linear_regression import lm_model
+# from .ml_model.linear_regression import lm_model
 
 # from .ml_model.logistic_regression import lgr_model
 
