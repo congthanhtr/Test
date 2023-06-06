@@ -31,6 +31,7 @@ class util:
     PREVIEW = {
         'source': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4x1GejWnBjnBOw8PoiXpncEWqKJe0oLYX4g&usqp=CAU'
     }
+    DEFAULT_EMAIL = 'congthanhtr151@gmail.com'
     MAXIUM_DISTANCE_FROM_HOTEL_TO_POI = 50
 
     vietnam_city_geo = VietnamCityGeo().load_list()
@@ -607,7 +608,7 @@ class util:
                                  lat=hotel['lat'],
                                  lng=hotel['lon'], 
                                  phone=hotel['phone'] if 'phone' in hotel else None, 
-                                 email=hotel['email'] if 'email' in hotel else None)
+                                 email=hotel['email'] if 'email' in hotel and not util.is_null_or_empty(hotel['email']) else util.DEFAULT_EMAIL)
             if 'hotel_filter_condition' in hotel:
                 hotel_filter_condtions: list[dict] = hotel['hotel_filter_condition']
                 keys = [list(dictionary.keys())[0] for dictionary in hotel_filter_condtions]

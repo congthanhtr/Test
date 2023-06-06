@@ -209,7 +209,7 @@ class RecommendService:
                         lat=0,
                         lng=0,
                         phone='',
-                        email=''
+                        email=util.DEFAULT_EMAIL
                     )
                     tour_program.pois = []
                     for xid in day.split(','):
