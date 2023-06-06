@@ -563,7 +563,8 @@ def rearrange_grid_view(request):
             xids = body['xids']
             #endregion
 
-            recommend_service = RecommendService(db=db)
+            time_travel_service = TimeTravelService()
+            recommend_service = RecommendService(time_travel_service=time_travel_service,db=db)
             result = result.assign_value(data=recommend_service.rearrange_grid_view(xids=xids), status_code=HTTPStatus.OK.value)
             return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
 
