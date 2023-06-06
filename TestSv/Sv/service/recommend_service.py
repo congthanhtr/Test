@@ -437,6 +437,29 @@ class RecommendService:
         # predict places
         return recommend_model
 
+    def rearrange_grid_view(self, xids):
+        result = []
+        list_pois = []
+        collection_poi = self.db.get_collection('vn_pois')
+        for xid in xids:
+            list_pois.append(collection_poi.find_one({'xid': xid}, {'_id': 0}))
+        list_coord = [(poi['point']['lat'], poi['point']['lon']) for poi in list_pois]
+        travel_order = self.to_travel_order(list_pois, list_coord)
+        for i in range(len(travel_order)):
+            data = {}
+            data['vi_name'] = travel_order[i]['vi_name']
+            data['vi_description'] = travel_order[i]['vi_description'] if 'vi_description' in travel_order[i] and not util.is_null_or_empty(travel_order[i]['vi_description']) else util.LOREM
+            if i == 0:
+                data['time'] = 0
+            else:
+                current_coord = (travel_order[i]['point']['lat'], travel_order[i]['point']['lon'])
+                previous_coord = (travel_order[i-1]['point']['lat'], travel_order[i-1]['point']['lon'])
+                time = util.get_distance_between_two_cord(current_coord, previous_coord) / self.time_travel_service.DRIVING_SPEED
+                data['time'] = time
+            result.append(data)
+
+        return result
+
     def recommend(self):
         # init result
         recommend_model = RecommendModel()
@@ -717,3 +740,4 @@ class RecommendService:
                     transport]
             data.append(arow)
         return data
+    

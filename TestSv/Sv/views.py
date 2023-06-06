@@ -300,7 +300,8 @@ def recommend_v2(request):
 
             time_travel_service = TimeTravelService()
             ml_service = MachineLearningService()
-            # db = util.get_db_handle(db_name='recommender')
+            # if cost_range is None or cost_range < 1:
+            #     raise ValueError('cost_range must be greater than 1')
 
             recommend_service = RecommendService(
                 num_of_day=num_of_day, 
@@ -541,6 +542,34 @@ def extract_info_to_excel(request):
                 time_travel_service=time_travel_service,
                 db=db)
             result = result.assign_value(data=recommend_service.extract_info_to_excel(), status_code=HTTPStatus.OK.value)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
+
+        except Exception as e:
+            result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+
+    else:
+        result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
+        return JsonResponse(util.to_json(result), status=HTTPStatus.METHOD_NOT_ALLOWED)
+
+def rearrange_grid_view(request):
+    API_ENDPOINT = BASE_API_URL+'v2/grid_view'
+    result = ResultObject()
+    if request.method == 'POST':
+        try:
+            #region bodycontent
+            body = json.loads(request.body)
+            xids = body['xids']
+            #endregion
+
+            time_travel_service = TimeTravelService()
+            ml_service = MachineLearningService()
+
+            recommend_service = RecommendService(
+                ml_service=ml_service, 
+                time_travel_service=time_travel_service,
+                db=db)
+            result = result.assign_value(data=recommend_service.rearrange_grid_view(xids=xids), status_code=HTTPStatus.OK.value)
             return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
 
         except Exception as e:
