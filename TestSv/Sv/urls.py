@@ -13,5 +13,6 @@ urlpatterns = [
     path('v2/poi', views.poi_add_and_update, name='poi_add_and_update'), # add and update api
     path('v2/poi/delete/<str:xid>', views.poi_delete_by_xid, name='poi_delete_by_xid'),
     path('v2/extract_info_to_excels',views.extract_info_to_excel, name='extract_info_to_excel'),
-    path('v2/grid_view', views.rearrange_grid_view, name='grid_view')
+    path('v2/grid_view', views.rearrange_grid_view, name='grid_view'),
+    path('v2/get_provider/<str:province_id>', views.get_provider, name='get_provider')
 ]

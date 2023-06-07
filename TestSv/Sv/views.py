@@ -575,3 +575,25 @@ def rearrange_grid_view(request):
     else:
         result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
         return JsonResponse(util.to_json(result), status=HTTPStatus.METHOD_NOT_ALLOWED)
+    
+def get_provider(request, province_id):
+    API_ENDPOINT = BASE_API_URL+'v2/get_providers'
+    result = ResultObject()
+    if request.method == 'GET':
+        try:
+            #region bodycontent
+            types = request.GET.get('types', '').split(',')
+            #endregion
+            province_name = util.preprocess_city_name(util.get_province_name_by_code(province_id))
+            from .model.provider import Provider
+            data = Provider().get_provider(db=db, types=types, province_name=province_name)
+            result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
+
+        except Exception as e:
+            result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
+            return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
+
+    else:
+        result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.METHOD_NOT_ALLOWED)
+        return JsonResponse(util.to_json(result), status=HTTPStatus.METHOD_NOT_ALLOWED)
