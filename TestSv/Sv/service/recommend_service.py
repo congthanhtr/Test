@@ -451,6 +451,7 @@ class RecommendService:
         travel_order = self.to_travel_order(list_pois, list_coord)
         for i in range(len(travel_order)):
             data = {}
+            data['xid'] = travel_order[i]['xid']
             data['vi_name'] = travel_order[i]['vi_name']
             data['vi_description'] = travel_order[i]['vi_description'] if 'vi_description' in travel_order[i] and not util.is_null_or_empty(travel_order[i]['vi_description']) else util.LOREM
             if i == 0:
