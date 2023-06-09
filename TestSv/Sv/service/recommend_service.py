@@ -122,7 +122,7 @@ class RecommendService:
             hotels_in_province.extend(list(collection_hotel.find({'province_name': util.preprocess_city_name(city), 'hotel_filter_condition': {'$ne': None}})))
             # then if not enough get random hotels
             hotels_in_province.extend(list(collection_hotel.aggregate([{'$match': {'province_name': util.preprocess_city_name(city), 'kinds': {'$regex': '(other_hotels)'}}}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}])))
-            hotels = util.get_hotel_list_from_city_name_v2(hotels_in_province, self.hotel_filter_condition)[:self. NUM_OF_HOTEL_FROM_RESPONSE]
+            hotels = util.get_hotel_list_from_city_name_v2(hotels_in_province, self.hotel_filter_condition)[:self.NUM_OF_HOTEL_FROM_RESPONSE]
             list_hotel_by_each_province.append(hotels)
         # get list pois by hotel
         list_pois_by_hotel: list[list[list[InterestingPlace]]] = []
@@ -448,7 +448,7 @@ class RecommendService:
         for xid in xids:
             list_pois.append(collection_poi.find_one({'xid': xid}, {'_id': 0}))
         list_coord = [(poi['point']['lat'], poi['point']['lon']) for poi in list_pois]
-        travel_order = self.to_travel_order(list_pois, list_coord)
+        travel_order = self.to_travel_order(list_pois, list_coord, returning=False)
         for i in range(len(travel_order)):
             data = {}
             data['xid'] = travel_order[i]['xid']
@@ -646,6 +646,21 @@ class RecommendService:
         permutaion, distance = solve_tsp_dynamic_programming(data)
         return permutaion 
     
+    def get_path_tsp_no_return(self, distances):
+        import numpy as np
+        from itertools import permutations
+        n = distances.shape[0]
+        idx = np.arange(n)
+        idx_except_start = idx[idx != 0]
+        min_path = np.inf
+        for path in permutations(idx_except_start):
+            current_path = np.insert(path, 0, 0)
+            current_dist = distances[current_path[:-1], current_path[1:]].sum()
+            if current_dist < min_path:
+                min_path = current_dist
+                best_path = current_path
+        return best_path 
+        
     def to_distance_matrix(self, list_cord: list):
         province_distance_matrix = []
         for city in list_cord:
@@ -656,10 +671,10 @@ class RecommendService:
         import numpy as np
         return np.array(province_distance_matrix)
     
-    def to_travel_order(self, source, list_cord_of_source):
+    def to_travel_order(self, source, list_cord_of_source, returning=True):
         if len(source) <= 2:
             return source
-        mstree = self.get_path_tsp(self.to_distance_matrix(list_cord_of_source))
+        mstree = self.get_path_tsp(self.to_distance_matrix(list_cord_of_source)) if returning is True else self.get_path_tsp_no_return(self.to_distance_matrix(list_cord_of_source))
         temp = []
         for node in mstree:
             temp.append(source[node])

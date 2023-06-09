@@ -396,7 +396,19 @@ def poi_find_by_xid(request, xid):
     if request.method == 'GET':
         try:
             collection_poi = db.get_collection('vn_pois')
-            data = list(collection_poi.find({'xid':xid}, {'_id':0}))
+            poi_with_xid = list(collection_poi.find({'xid':xid}, {'_id':0}))[0]
+            from .model.interesting_places import InterestingPlace
+            data = InterestingPlace(
+                xid=poi_with_xid['xid'],
+                vi_name=poi_with_xid['vi_name'],
+                description=poi_with_xid['vi_description'] if 'vi_description' in poi_with_xid and not util.is_null_or_empty(poi_with_xid['vi_description']) else util.LOREM,
+                lat=poi_with_xid['point']['lat'],
+                lng=poi_with_xid['point']['lon'],
+                preview=poi_with_xid['preview'] if 'preview' in poi_with_xid and not util.is_null_or_empty(poi_with_xid['preview']) else util.PREVIEW,
+                rate=poi_with_xid['rate'],
+                kinds=util.get_poi_kinds(poi_with_xid['kinds']),
+                province_id=poi_with_xid['province_id']
+            )
             result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
             return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
         except Exception as e:
