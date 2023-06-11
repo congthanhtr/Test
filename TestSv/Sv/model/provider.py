@@ -7,16 +7,16 @@ class ProviderModel(HasCoord):
     name: str = ''
     phone: str = ''
     email: str = ''
-    criterias: str = ''
+    amenities: str = ''
     type: str = ''
 
-    def __init__(self, name, lat, lon, phone, email, criterias, type):
+    def __init__(self, name, lat, lon, phone, email, amenities, type):
         self.name = name
         self.lat = lat
         self.lon = lon
         self.phone = phone
         self.email = email
-        self.criterias = criterias
+        self.amenities = amenities
         self.type = type
 
 class Provider:
@@ -37,7 +37,7 @@ class Provider:
             lon=res['lon'] if 'lon' in res else res['xid'],
             phone=res['phone'] if 'phone' in res else res['xid'],
             email=res['email'] if 'email' in res and not util.is_null_or_empty(res['email']) else util.DEFAULT_EMAIL,
-            criterias=res['criterias'],
+            criterias=res['amenities'],
             type=res['type']
         ) for res in result]
         return result

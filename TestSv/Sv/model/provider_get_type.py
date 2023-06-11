@@ -16,7 +16,7 @@ class GetHotelProvider(GetProviderType):
 
     def get_provider(self, db, province_name):
         collection = self.get_collection(db)
-        result = list(collection.find({'province_name': province_name, 'rate': {'$gte': 2}, 'criterias': {'$ne': None}}, {'_id': 0}))
+        result = list(collection.find({'province_name': province_name, 'rate': {'$gte': 2}, 'amenities': {'$ne': None}}, {'_id': 0}))
         for i in range(len(result)):
             result[i]['type'] = 'hotel'
         return result
@@ -27,7 +27,7 @@ class GetRestaurantProvider(GetProviderType):
 
     def get_provider(self, db, province_name):
         collection = self.get_collection(db)
-        result = list(collection.find({'province_name': province_name, 'rate': {'$gte': 2}, 'criterias': {'$ne': None}}, {'_id': 0}))
+        result = list(collection.find({'province_name': province_name, 'rate': {'$gte': 2}, 'amenities': {'$ne': None}}, {'_id': 0}))
         for i in range(len(result)):
             result[i]['type'] = 'restaurant'
         return result

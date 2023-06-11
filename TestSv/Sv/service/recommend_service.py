@@ -195,7 +195,7 @@ class RecommendService:
             sim_recommend_from_tour_created = sorted(sim_recommend_from_tour_created, key=lambda x: x[1], reverse=True)
 
         if len(sim_recommend_from_tour_created) > 0:
-            sim_recommend_from_tour_created = sim_recommend_from_tour_created[:2] if len(sim_recommend_from_tour_created) > 2 else sim_recommend_from_tour_created
+            sim_recommend_from_tour_created = sim_recommend_from_tour_created[:1]
             for tour_sim_tuple in sim_recommend_from_tour_created:
                 recommend_from_tour_created = []
                 tour = collection_tour_created.find_one({'_id': tour_sim_tuple[0]})
@@ -243,7 +243,7 @@ class RecommendService:
             for j in range(0, len(self.cities_to)):
                 is_last_province = 1 if j == (len(self.cities_to) - 1) else 0
                 driving_time_between_province = list_travel_time_between_provinces[j] if not is_last_province else list_travel_time_between_provinces[j] + total_travel_time
-                n_places = math.floor(self.get_n_places(list_travel_time_by_each_province[j], driving_time_between_province, self.cost_range, len(self.cities_to), is_last_province)[0])
+                n_places = round(self.get_n_places(list_travel_time_by_each_province[j], driving_time_between_province, self.cost_range, len(self.cities_to), is_last_province)[0])
                 if n_places < self.num_of_day:
                     raise ValueError('not enough places')
                 n_places_each_day = util.divide_equally(n_places, list_travel_time_by_each_province[j])
@@ -647,6 +647,7 @@ class RecommendService:
         return permutaion 
     
     def get_path_tsp_no_return(self, distances):
+        # https://stackoverflow.com/questions/6733999/what-is-the-problem-name-for-traveling-salesman-problemtsp-without-considering/7158721#7158721
         import numpy as np
         from itertools import permutations
         n = distances.shape[0]
