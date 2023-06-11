@@ -32,7 +32,7 @@ class Provider:
             result.extend(self.get_provider_type.get_provider(db=db, province_name=province_name))
 
         result = [ProviderModel(
-            name=res['vi_name'],
+            name=res['name'],
             lat=res['lat'] if 'lat' in res else res['xid'],
             lon=res['lon'] if 'lon' in res else res['xid'],
             phone=res['phone'] if 'phone' in res else res['xid'],
