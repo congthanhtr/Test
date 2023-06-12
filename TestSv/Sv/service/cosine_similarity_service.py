@@ -18,7 +18,10 @@ def cos(feats1, feats2):
     # return sumxy/math.sqrt(sumxx*sumyy)
     from numpy import dot
     from numpy.linalg import norm
+    from sklearn.metrics.pairwise import cosine_similarity
 
+    # return cosine_similarity([feats1], [feats2])[0][0]
+    # tích vô hướng giữa 2 vector / tích độ dài
     return dot(feats1, feats2)/(norm(feats1)*norm(feats2))
 
 from sklearn.feature_extraction.text import CountVectorizer
@@ -115,7 +118,7 @@ class CosineSimilarityService:
         number_sim = CosineSimilarityService.strategy.calculate(list_number1, list_number2)
         if number_sim <= CosineSimilarityService.number_sim_threshold:
             return None
-        
+
         # calculate the similarity between string1 and string2
         CosineSimilarityService.strategy = CosineSimilarityStringStrategy()
         string_sim = CosineSimilarityService.strategy.calculate(list_string1, list_string2)
