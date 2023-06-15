@@ -631,3 +631,11 @@ class util:
         client = MongoClient(connection_string)
         db = client[db_name]
         return db
+
+    @staticmethod
+    def find_ele_in_list_obj_by_prop(list, prop_name, prop_value):
+        for ele in list:
+            if ele[prop_name] == prop_value:
+                return ele
+            
+        return None
