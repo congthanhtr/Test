@@ -27,14 +27,14 @@ class ProviderModel(HasCoord):
 class Provider:
     get_provider_type: GetProviderType = None
 
-    def get_provider(self, db, types, province_name):
+    def get_provider(self, db, types, province_id):
         result = []
         if 'hotel' in types:
             self.set_provider_type(GetHotelProvider())
-            result.extend(self.get_provider_type.get_provider(db=db, province_name=province_name))
+            result.extend(self.get_provider_type.get_provider(db=db, province_id=province_id))
         if 'restaurant' in types:
             self.set_provider_type(GetRestaurantProvider())
-            result.extend(self.get_provider_type.get_provider(db=db, province_name=province_name))
+            result.extend(self.get_provider_type.get_provider(db=db, province_id=province_id))
 
         result = [ProviderModel(
             name=res['name'],

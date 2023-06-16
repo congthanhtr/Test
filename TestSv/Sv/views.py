@@ -20,7 +20,7 @@ import traceback, sys
 
 # ML models
 # from .ml_model.decision_tree import model as dc_model
-# from .ml_model.decision_tree import inputs
+# from .ml_model.decision_tree import x_train
 
 # from .ml_model.linear_regression import lm_model
 
@@ -165,7 +165,7 @@ def recommend_tour(request):
         return JsonResponse(util.get_exception(API_ENDPOINT, util.NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE))
 
 def weather_forecast(request):
-    API_ENDPOINT = BASE_API_URL+'weather_forecast'
+    API_ENDPOINT = BASE_API_URL+'v2/weather_forecast'
     result = ResultObject()
     if request.method == "POST":
         try:
@@ -598,10 +598,10 @@ def get_provider(request, province_id):
             #endregion
             province_name = util.preprocess_city_name(util.get_province_name_by_code(province_id))
             from .model.provider import Provider
-            data = Provider().get_provider(db=db, types=types, province_name=province_name)
+            data = Provider().get_provider(db=db, types=types, province_id=int(province_id))
             result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)
             return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
-
+        
         except Exception as e:
             result = result.assign_value(API_ENDPOINT=API_ENDPOINT, error=ErrorResultObjectType.EXCEPTION)
             return JsonResponse(util.to_json(result), status=HTTPStatus.BAD_REQUEST)
