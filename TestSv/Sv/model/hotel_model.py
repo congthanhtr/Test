@@ -6,12 +6,16 @@ class HotelModel(HasCoord):
     name: str
     phone: str
     email: str
+    address: str
+    amenities: list
 
-    def __init__(self, xid, name, lat, lng, phone, email) -> None:
+    def __init__(self, xid, name, lat, lng, phone, email, address, amenities) -> None:
         self.xid = xid
         self.name = name
         self.lat = lat
         self.lng = lng
         self.phone = phone
         self.email = email
+        self.address = address
+        self.amenities = amenities
         

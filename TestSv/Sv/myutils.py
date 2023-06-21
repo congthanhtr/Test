@@ -608,7 +608,9 @@ class util:
                                  lat=hotel['lat'],
                                  lng=hotel['lon'], 
                                  phone=hotel['phone'] if 'phone' in hotel else None, 
-                                 email=hotel['email'] if 'email' in hotel and not util.is_null_or_empty(hotel['email']) else util.DEFAULT_EMAIL)
+                                 email=hotel['email'] if 'email' in hotel and not util.is_null_or_empty(hotel['email']) else util.DEFAULT_EMAIL,
+                                 address=hotel['address'] if 'address' in hotel else '',
+                                 amenities=hotel['amenities'] if 'amenities' in hotel else '')
             if 'hotel_filter_condition' in hotel:
                 hotel_filter_condtions: list[dict] = hotel['hotel_filter_condition']
                 keys = [list(dictionary.keys())[0] for dictionary in hotel_filter_condtions]

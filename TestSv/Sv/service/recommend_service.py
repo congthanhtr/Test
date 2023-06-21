@@ -117,9 +117,9 @@ class RecommendService:
         '''
         # self.hotel_filter_condition = hotel_filter
         for city in self.cities_to:
-            hotels_in_province = []
+            # hotels_in_province = []
             # get hotels that has booking infomation
-            hotels_in_province.extend(list(collection_hotel.find({'province_name': util.preprocess_city_name(city), 'hotel_filter_condition': {'$ne': None}})))
+            hotels_in_province = list(collection_hotel.find({'province_name': util.preprocess_city_name(city), 'amenities': {'$ne': None}}))
             # then if not enough get random hotels
             hotels_in_province.extend(list(collection_hotel.aggregate([{'$match': {'province_name': util.preprocess_city_name(city), 'kinds': {'$regex': '(other_hotels)'}}}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}])))
             hotels = util.get_hotel_list_from_city_name_v2(hotels_in_province, self.hotel_filter_condition)[:self.NUM_OF_HOTEL_FROM_RESPONSE]
@@ -211,7 +211,9 @@ class RecommendService:
                         lat=0,
                         lng=0,
                         phone='',
-                        email=util.DEFAULT_EMAIL
+                        email=util.DEFAULT_EMAIL,
+                        address='',
+                        amenities=[]
                     )
                     tour_program.pois = []
                     for xid in day.split(','):
