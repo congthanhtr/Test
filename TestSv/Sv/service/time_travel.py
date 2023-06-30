@@ -2,6 +2,8 @@ import time
 from ..myutils import util
 import pandas as pd
 
+db = util.get_db_handle(db_name='recommender')
+
 class TimeTravelService:
     distance: float = 0.0
     flight_time: float = 0
@@ -20,7 +22,20 @@ class TimeTravelService:
         neareast_airport_from, cord_neareast_airport_from = util.get_neareast_airport_v2(from_location)
         neareast_airport_to, cord_neareast_airport_to = util.get_neareast_airport_v2(to_location)
         self.driving_time, self.distance = self._calculate_driving_time(collection=collection, city_from=city_from[0], city_to=city_to[0])
-        self.railway_time = self._calculate_railway_time()
+        if collection is not None:
+            collection = db.vn_provinces
+            collection_provinces_has_train = list(collection.find({
+                    'has_train': True
+                }, {
+                    'admin_name': 1,
+                    '_id': 0
+                }))
+            if util.find_ele_in_list_obj_by_prop(collection_provinces_has_train, 'admin_name', util.preprocess_city_name(city_from[0])) and util.find_ele_in_list_obj_by_prop(collection_provinces_has_train, 'admin_name', util.preprocess_city_name(city_to[0])):
+                self.railway_time = self._calculate_railway_time()
+            else:
+                self.railway_time = 0
+        else:
+            self.railway_time = 0
 
         # calculate flight time (include driving time from airport to destination)
         self.flight_time = self._calculate_flight_time(neareast_airport_from.code, neareast_airport_to.code)

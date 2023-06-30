@@ -14,8 +14,6 @@ from ..model.recommend_model import RecommendModel, TourProgramModel
 from ..model.hotel_model import HotelModel
 from ..model.interesting_places import InterestingPlace
 
-accomodations = ['alpine_hut', 'apartments', 'campsites', 'guest_houses', 'hostels', 'other_hotels', 'love_hotels', 'motels', 'resorts', 'villas_and_chalet']
-
 class RecommendService:
     num_of_day: int = 0
     num_of_night: int = 0
