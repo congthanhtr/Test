@@ -125,4 +125,4 @@ class CosineSimilarityService:
         if string_sim <= CosineSimilarityService.string_sim_threshold:
             return None
 
-        return number_sim + string_sim
+        return (number_sim + string_sim) / 2

@@ -34,7 +34,7 @@ class MachineLearningService:
         return self
 
     def get_predict_n_places_model(self):
-        return self.load_model(self.PREDICT_N_PLACES_PATH,'predict_n_places')
+        return self.load_model(self.PREDICT_N_PLACES_PATH,'predict_n_places_')
 
     def get_predict_vihicles_model(self):
         return self.load_model(self.PREDICT_VIHICLES_PATH, 'predict_vihicles')
