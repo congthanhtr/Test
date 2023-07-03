@@ -129,7 +129,7 @@ class RecommendService:
         for city in self.cities_to:
             # hotels_in_province = []
             # get hotels that has booking infomation
-            hotels_in_province = list(collection_hotel.find({'province_name': util.preprocess_city_name(city), 'amenities': {'$ne': None}}))
+            hotels_in_province = list(collection_hotel.find({'province_name': util.preprocess_city_name(city), 'amenities': {'$ne': None}, 'phone': {'$exists': True}}))
             # then if not enough get random hotels
             hotels_in_province.extend(list(collection_hotel.aggregate([{'$match': {'province_name': util.preprocess_city_name(city), 'kinds': {'$regex': '(other_hotels)'}}}, {'$sample': {'size': self.LIMIT_HOTEL_RESULT}}])))
             hotels = util.get_hotel_list_from_city_name_v2(hotels_in_province, self.hotel_filter_condition)[:self.NUM_OF_HOTEL_FROM_RESPONSE]
@@ -186,7 +186,7 @@ class RecommendService:
 
         # need a step before build program tour
         vector_similarity = self.get_vector_similarity()
-        tour_created = list(collection_tour_created.find(
+        tour_created: list[dict] = list(collection_tour_created.find(
             {"from": {"$in": self.code_cities_from}, "to": {"$in": self.code_cities_to}, "num_of_day": self.num_of_day},
             {"ref": 0, "log_created_date": 0}
             )
@@ -194,9 +194,12 @@ class RecommendService:
         sim_recommend_from_tour_created = []
         if len(tour_created) > 0:
             for tc in tour_created:
+                # remove unused fields
+                tc.pop('hotels')
+                tc.pop('num_of_passengers')
+                tc.pop('pois')
                 vector_created = list(tc.values())
                 tour_created_id = vector_created.pop(0)
-                vector_created.pop(-1)
                 vector_created[5] = self.seperate_tour_filter_condtion(vector_created[5])
                 vector_created[6] = self.seperate_tour_filter_condtion(vector_created[6])
                 sim = CosineSimilarityService.calculate(vector_similarity, vector_created)
@@ -208,23 +211,29 @@ class RecommendService:
             sim_recommend_from_tour_created = sim_recommend_from_tour_created[:self.NUM_OF_SIMILAR_TOUR] if len(sim_recommend_from_tour_created) >= self.NUM_OF_SIMILAR_TOUR else sim_recommend_from_tour_created
             for tour_sim_tuple in sim_recommend_from_tour_created:
                 recommend_from_tour_created = []
-                recommend_from_tour_created.append({'is_tour_similar': True})
                 tour = collection_tour_created.find_one({'_id': tour_sim_tuple[0]})
-                program = tour['pois']
+                recommend_from_tour_created.append({
+                    'is_tour_similar': True,
+                    'num_of_passengers': tour['num_of_passengers'] if 'num_of_passengers' in tour else 0,
+                    'cost': tour['cost_range'] if 'cost_range' in tour else 0.
+                })
+                hotels = tour['hotels']
+                program: list = tour['pois']
                 no_of_day = 1
                 for day in program:
                     tour_program = TourProgramModel()
                     tour_program.no_of_day = no_of_day
                     tour_program.province = set()
+                    hotel = collection_hotel.find_one({'xid': hotels[program.index(day)]})
                     tour_program.hotel = HotelModel(
-                        xid='',
-                        name='',
-                        lat=0,
-                        lng=0,
-                        phone='',
-                        email=util.DEFAULT_EMAIL,
-                        address='',
-                        amenities=[]
+                        xid=hotel['xid'],
+                        name=hotel['name'],
+                        lat=hotel['lat'],
+                        lng=hotel['lon'],
+                        phone=hotel['phone'] if 'phone' in hotel else '',
+                        email=hotel['email'] if 'email' in hotel else util.DEFAULT_EMAIL,
+                        address=hotel['address'] if 'address' in hotel else '',
+                        amenities=hotel['amenities']
                     )
                     tour_program.pois = []
                     for xid in day.split(','):
@@ -244,6 +253,7 @@ class RecommendService:
                             )
                             tour_program.province.add(util.get_province_code_by_name(poi_with_xid['province_name']))
                             tour_program.pois.append(interesting_place)
+                    tour_program.route = self.get_route_url(tour_program.hotel, tour_program.pois)
                     recommend_from_tour_created.append(tour_program)
                     no_of_day += 1
                 recommend_model.program.append(recommend_from_tour_created)
@@ -287,6 +297,7 @@ class RecommendService:
                     for poi in sub_pois:
                         list_sub_pois_coord.append(poi.get_cord())
                     tour_program.pois = self.to_travel_order(sub_pois, list_sub_pois_coord)
+                    tour_program.route = self.get_route_url(hotel=hotel_inday, pois=tour_program.pois)
                     program_day.append(tour_program)
                     no_of_day += 1
                     pois_inday = list(set(pois_inday) - set(sub_pois))
@@ -776,3 +787,13 @@ class RecommendService:
             data.append(arow)
         return data
     
+    def get_route_url(self, hotel, pois):
+        route_ith = 1
+        route = [f'wp.0={hotel.get_cord()[0]},{hotel.get_cord()[1]}']
+        for poi in pois:
+            route.append(f'wp.{route_ith}={poi.get_cord()[0]},{poi.get_cord()[1]}')
+            route_ith += 1
+        route.append(f'wp.{route_ith}={hotel.get_cord()[0]},{hotel.get_cord()[1]}')
+        route_url = '&'.join(route)
+        result = util.BING_ROUTE_API.format(util.API_KEY_BING, route_url)
+        return result

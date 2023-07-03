@@ -6,12 +6,14 @@ class TourProgramModel:
     no_of_day: int = 0
     province = None
     pois: list = []
+    route: str = ''
 
     def __init__(self) -> None:
         self.hotel = None
         self.no_of_day = 0
         self.province = None
         self.pois = []
+        self.route = None
 
 class RecommendModel:
     num_of_day: int = 0
@@ -20,5 +22,6 @@ class RecommendModel:
     cities_to: list = []
     type_of_tour: int = 0
     cost_range: float = 0.0
+    num_of_passengers: int = 0
     main_transport: str = ''
     program: list[TourProgramModel, dict] = []

@@ -23,6 +23,7 @@ class util:
 
     API_KEY = open('static/api_key.txt').read()
     API_KEY_OPENTRIPMAP = open('static/api_key_opentripmap.txt').read()
+    API_KEY_BING = open('static/api_key_bing.txt').read()
     
     NOT_SUPPORT_HTTP_METHOD_JSONRESPONSE = 'not supported this http method'
     EXCEPTION_THROWN_AT_JSONRESPONSE = 'exception thrown at '
@@ -46,6 +47,8 @@ class util:
     OPENTRIPMAP_DETAIL_PLACE_API = 'https://api.opentripmap.com/0.1/en/places/xid/{}?apikey={}'
     OPENTRIPMAP_HOTELS_API = 'https://api.opentripmap.com/0.1/en/places/radius?radius=50000&lon={}&lat={}&kinds=other_hotels&limit=20&apikey={}'
     OPENTRIPMAP_POI_API = 'https://api.opentripmap.com/0.1/en/places/radius?radius=50000&lon={}&lat={}&kinds={}&limit=20&apikey={}'
+
+    BING_ROUTE_API = 'https://dev.virtualearth.net/REST/v1/Imagery/Map/Road/Routes?key={}&{}'
     
     TOUR_SINH_THAI = ['nature_reserves', 'islands', 'waterfalls', 'canyons', 'caves', 'garden', 'dams']
     TOUR_VAN_HOA = [
