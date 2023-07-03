@@ -297,6 +297,8 @@ def recommend_v2(request):
             cost_range = body['cost_range']
             hotel_filter_condition = body['hotel_filter_condition']
             tour_filter_condition = body['tour_filter_condition']
+            num_of_tour = body['num_of_tour'] if 'num_of_tour' in body else None
+            num_of_similar = body['num_of_similar'] if 'num_of_similar' in body else None
             #endregion
 
             time_travel_service = TimeTravelService()
@@ -314,7 +316,9 @@ def recommend_v2(request):
                 tour_filter_condition=tour_filter_condition, 
                 ml_service=ml_service, 
                 time_travel_service=time_travel_service,
-                db=db)
+                db=db,
+                num_of_tour=num_of_tour,
+                num_of_similar=num_of_similar)
             result = result.assign_value(data=recommend_service.recommend_v3(), status_code=HTTPStatus.OK.value)
             return JsonResponse(util.to_json(result), status=HTTPStatus.OK)
 

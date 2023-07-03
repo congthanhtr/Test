@@ -33,6 +33,7 @@ class RecommendService:
     db: Database = None
 
     NUM_OF_HOTEL_FROM_RESPONSE = 4
+    NUM_OF_SIMILAR_TOUR = 1
     LIMIT_HOTEL_RESULT = 30
     LIMIT_POI_RESULT = 100
     MINIMUM_POI_RESULT = 10
@@ -50,6 +51,8 @@ class RecommendService:
         tour_filter_condition = None,
         ml_service = None,
         time_travel_service = None,
+        num_of_tour = None,
+        num_of_similar = None
     ) -> None:
         self.num_of_day = num_of_day
         self.num_of_night = num_of_night
@@ -77,6 +80,16 @@ class RecommendService:
 
         self.db = db
 
+        if num_of_tour is not None:
+            self.NUM_OF_HOTEL_FROM_RESPONSE = num_of_tour
+
+        if num_of_similar is not None:
+            self.NUM_OF_SIMILAR_TOUR = num_of_similar
+
+        if num_of_tour <= 0 and num_of_similar <= 0:
+            self.NUM_OF_HOTEL_FROM_RESPONSE = 1
+            self.NUM_OF_SIMILAR_TOUR = 1
+
     def recommend_v3(self): # change predict vehicle model
         # init result
         recommend_model = RecommendModel()
@@ -89,7 +102,6 @@ class RecommendService:
             raise ValueError('cost range must be greater than 0')
         recommend_model.cost_range = self.cost_range
         recommend_model.program = []
-        
         # validate input
         # validate input model goes here
 
@@ -193,9 +205,10 @@ class RecommendService:
             sim_recommend_from_tour_created = sorted(sim_recommend_from_tour_created, key=lambda x: x[1], reverse=True)
 
         if len(sim_recommend_from_tour_created) > 0:
-            sim_recommend_from_tour_created = sim_recommend_from_tour_created[:1]
+            sim_recommend_from_tour_created = sim_recommend_from_tour_created[:self.NUM_OF_SIMILAR_TOUR] if len(sim_recommend_from_tour_created) >= self.NUM_OF_SIMILAR_TOUR else sim_recommend_from_tour_created
             for tour_sim_tuple in sim_recommend_from_tour_created:
                 recommend_from_tour_created = []
+                recommend_from_tour_created.append({'is_tour_similar': True})
                 tour = collection_tour_created.find_one({'_id': tour_sim_tuple[0]})
                 program = tour['pois']
                 no_of_day = 1
@@ -238,6 +251,7 @@ class RecommendService:
         # build program tour again
         for i in range(0, self.NUM_OF_HOTEL_FROM_RESPONSE):
             program_day = []
+            program_day.append({'is_tour_similar': False})
             temp = list_pois_by_hotel.copy()
             no_of_day = 1
             for j in range(0, len(self.cities_to)):

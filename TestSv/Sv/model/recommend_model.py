@@ -21,4 +21,4 @@ class RecommendModel:
     type_of_tour: int = 0
     cost_range: float = 0.0
     main_transport: str = ''
-    program: list[TourProgramModel] = []
+    program: list[TourProgramModel, dict] = []
