@@ -297,8 +297,8 @@ def recommend_v2(request):
             cost_range = body['cost_range']
             hotel_filter_condition = body['hotel_filter_condition']
             tour_filter_condition = body['tour_filter_condition']
-            num_of_tour = body['num_of_tour'] if 'num_of_tour' in body else None
-            num_of_similar = body['num_of_similar'] if 'num_of_similar' in body else None
+            num_of_tour = body['num_of_tour'] if 'num_of_tour' in body else 4
+            num_of_similar = body['num_of_similar'] if 'num_of_similar' in body else 1
             #endregion
 
             time_travel_service = TimeTravelService()
