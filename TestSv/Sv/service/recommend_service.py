@@ -86,7 +86,7 @@ class RecommendService:
         if num_of_similar is not None:
             self.NUM_OF_SIMILAR_TOUR = num_of_similar
 
-        if num_of_tour <= 0 and num_of_similar <= 0:
+        if num_of_tour is not None and num_of_similar is not None and num_of_tour <= 0 and num_of_similar <= 0:
             self.NUM_OF_HOTEL_FROM_RESPONSE = 1
             self.NUM_OF_SIMILAR_TOUR = 1
 
