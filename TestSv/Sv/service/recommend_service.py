@@ -195,8 +195,8 @@ class RecommendService:
         if len(tour_created) > 0:
             for tc in tour_created:
                 # remove unused fields
-                tc.pop('hotels')
-                tc.pop('num_of_passengers')
+                tc.pop('hotels') if 'hotel' in tc else None
+                tc.pop('num_of_passengers') if 'num_of_passengers' in tc else None
                 tc.pop('pois')
                 vector_created = list(tc.values())
                 tour_created_id = vector_created.pop(0)
@@ -217,15 +217,16 @@ class RecommendService:
                     'num_of_passengers': tour['num_of_passengers'] if 'num_of_passengers' in tour else 0,
                     'cost': tour['cost_range'] if 'cost_range' in tour else 0.
                 })
-                hotels = tour['hotels']
+                hotels = tour['hotels'] if 'hotels' in tour else []
                 program: list = tour['pois']
                 no_of_day = 1
                 for day in program:
                     tour_program = TourProgramModel()
                     tour_program.no_of_day = no_of_day
                     tour_program.province = set()
-                    hotel = collection_hotel.find_one({'xid': hotels[program.index(day)]})
-                    tour_program.hotel = HotelModel(
+                    if program.index(day) is not None and len(hotels) > program.index(day):
+                        hotel = collection_hotel.find_one({'xid': hotels[program.index(day)]})
+                        tour_program.hotel = HotelModel(
                         xid=hotel['xid'],
                         name=hotel['name'],
                         lat=hotel['lat'],
@@ -235,6 +236,8 @@ class RecommendService:
                         address=hotel['address'] if 'address' in hotel else '',
                         amenities=hotel['amenities']
                     )
+                    else:
+                        tour_program.hotel = HotelModel()
                     tour_program.pois = []
                     for xid in day.split(','):
                         poi_with_xid = collection_poi.find_one({'xid': xid})
@@ -788,12 +791,19 @@ class RecommendService:
         return data
     
     def get_route_url(self, hotel, pois):
-        route_ith = 1
-        route = [f'wp.0={hotel.get_cord()[0]},{hotel.get_cord()[1]}']
+        route_ith = 0
+        route = []
+        if hotel.get_cord() != (0.0, 0.0):
+            route = [f'wp.0={hotel.get_cord()[0]},{hotel.get_cord()[1]}']
+            route_ith += 1
+        
         for poi in pois:
             route.append(f'wp.{route_ith}={poi.get_cord()[0]},{poi.get_cord()[1]}')
             route_ith += 1
-        route.append(f'wp.{route_ith}={hotel.get_cord()[0]},{hotel.get_cord()[1]}')
+        
+        if hotel.get_cord() != (0.0, 0.0):
+            route.append(f'wp.{route_ith}={hotel.get_cord()[0]},{hotel.get_cord()[1]}')
+
         route_url = '&'.join(route)
         result = util.BING_ROUTE_API.format(util.API_KEY_BING, route_url)
         return result

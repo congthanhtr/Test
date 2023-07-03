@@ -9,7 +9,7 @@ class HotelModel(HasCoord):
     address: str
     amenities: list
 
-    def __init__(self, xid, name, lat, lng, phone, email, address, amenities) -> None:
+    def __init__(self, xid='', name='', lat=0.0, lng=0.0, phone='', email='', address='', amenities=[]) -> None:
         self.xid = xid
         self.name = name
         self.lat = lat
