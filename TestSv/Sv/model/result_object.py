@@ -29,6 +29,7 @@ class ResultObject:
         elif error == ErrorResultObjectType.METHOD_NOT_ALLOWED:
             self.set_error_strategy(MethodNotAllowedResultObject())
             self.parse(self.error.assign_value(API_ENDPOINT))
+        API_ENDPOINT = ''
         return self
     
     def parse(self, json_str: dict):

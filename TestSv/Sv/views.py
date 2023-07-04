@@ -600,7 +600,6 @@ def get_provider(request, province_id):
             #region bodycontent
             types = request.GET.get('types', '').split(',')
             #endregion
-            province_name = util.preprocess_city_name(util.get_province_name_by_code(province_id))
             from .model.provider import Provider
             data = Provider().get_provider(db=db, types=types, province_id=int(province_id))
             result = result.assign_value(data=data, status_code=HTTPStatus.OK.value)

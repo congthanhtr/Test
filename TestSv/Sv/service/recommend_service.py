@@ -81,10 +81,16 @@ class RecommendService:
         self.db = db
 
         if num_of_tour is not None:
-            self.NUM_OF_HOTEL_FROM_RESPONSE = num_of_tour
+            if num_of_tour < 0:
+                self.NUM_OF_HOTEL_FROM_RESPONSE = 1
+            else:
+                self.NUM_OF_HOTEL_FROM_RESPONSE = num_of_tour
 
         if num_of_similar is not None:
-            self.NUM_OF_SIMILAR_TOUR = num_of_similar
+            if num_of_similar < 0:
+                self.NUM_OF_SIMILAR_TOUR = 1
+            else:
+                self.NUM_OF_SIMILAR_TOUR = num_of_similar
 
         if num_of_tour is not None and num_of_similar is not None and num_of_tour <= 0 and num_of_similar <= 0:
             self.NUM_OF_HOTEL_FROM_RESPONSE = 1
@@ -185,12 +191,15 @@ class RecommendService:
         list_travel_time_between_provinces = self.get_list_travel_times_between_provinces(total_travel_time)
 
         # need a step before build program tour
-        vector_similarity = self.get_vector_similarity()
-        tour_created: list[dict] = list(collection_tour_created.find(
-            {"from": {"$in": self.code_cities_from}, "to": {"$in": self.code_cities_to}, "num_of_day": self.num_of_day},
-            {"ref": 0, "log_created_date": 0}
+        tour_created = []
+        if self.NUM_OF_SIMILAR_TOUR > 0:
+            vector_similarity = self.get_vector_similarity()
+            tour_created: list[dict] = list(collection_tour_created.find(
+                {"from": {"$in": self.code_cities_from}, "to": {"$in": self.code_cities_to}, "num_of_day": self.num_of_day},
+                {"ref": 0, "log_created_date": 0}
+                )
             )
-        )
+
         sim_recommend_from_tour_created = []
         if len(tour_created) > 0:
             for tc in tour_created:
@@ -238,6 +247,7 @@ class RecommendService:
                     )
                     else:
                         tour_program.hotel = HotelModel()
+                        
                     tour_program.pois = []
                     for xid in day.split(','):
                         poi_with_xid = collection_poi.find_one({'xid': xid})
