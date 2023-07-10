@@ -4,6 +4,7 @@ import joblib
 from pymongo import MongoClient
 from sklearn import metrics
 from sklearn import tree
+from sklearn.model_selection import train_test_split
 
 from django.conf import settings
 
@@ -13,8 +14,6 @@ CONNECTION_STRING = settings.CONNECTION_STRING
 client = MongoClient(CONNECTION_STRING)
 db = client.recommender
 
-collection_driving_time = db.get_collection('vn_provinces_driving_time')
-collection_provinces = db.get_collection('vn_provines')
 collection_provinces_has_train = db.get_collection('vn_provinces').find({
     'has_train': True
 }, {
@@ -26,13 +25,17 @@ list_provinces_has_train = []
 for i in collection_provinces_has_train:
     list_provinces_has_train.append(i['admin_name'])
 
+df = pd.read_excel("static/predict_transport.xlsx")
+x = df.drop("transport", axis="columns")
+y = df["transport"]
+x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.75)
 
 # read train data
-df = pd.read_excel("static/predict_transport.xlsx")
-x_train = df.drop("transport", axis="columns")
-y_train = df['transport']
-city_from = df['from']
-city_to = df['to']
+# df = pd.read_excel("static/predict_transport.xlsx")
+# x_train = df.drop("transport", axis="columns")
+# y_train = df['transport']
+city_from = list(x_train['from'])
+city_to = list(x_train['to'])
 
 distance = []
 driving_time = []
@@ -62,11 +65,11 @@ x_train['railway_time'] = railway_time
 x_train = x_train.drop(columns=['from', 'to', 'ref'])
 
 # read test data
-df_test = pd.read_excel("static/predict_transport_test.xlsx")
-x_test = df_test.drop("transport", axis="columns")
-y_test = df_test["transport"]
-city_from_test = df_test['from']
-city_to_test = df_test['to']
+# df_test = pd.read_excel("static/predict_transport_test.xlsx")
+# x_test = df_test.drop("transport", axis="columns")
+# y_test = df_test["transport"]
+city_from_test = list(x_test['from'])
+city_to_test = list(x_test['to'])
 
 distance_test = []
 driving_time_test = []
